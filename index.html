@@ -387,9 +387,14 @@
         };
 
         let allQuestions = [];
-        quizData.part1.forEach((q) => allQuestions.push({ part: 1, ...q }));
-        quizData.part2.forEach((q) => allQuestions.push({ part: 2, ...q }));
-        quizData.part3.forEach((q) => allQuestions.push({ part: 3, ...q }));
+        quizData.part1.forEach((q) => allQuestions.push({ part: 1, maxPoints: 1, ...q }));
+        quizData.part2.forEach((q) => allQuestions.push({ part: 2, maxPoints: 1, ...q }));
+        quizData.part3.forEach((q) => {
+            const mp = q.type === 'read' ? 2 : 1;
+            allQuestions.push({ part: 3, maxPoints: mp, ...q });
+        });
+
+        const TOTAL_MAX_SCORE = allQuestions.reduce((sum, q) => sum + q.maxPoints, 0);
 
         // ==========================================
         // 3. STATE VARIABLES
@@ -581,7 +586,7 @@
                     const btn = document.createElement('button');
                     btn.className = "neon-button bg-slate-800 border border-sky-500/50 text-white rounded-xl p-4 text-left hover:bg-sky-900 transition";
                     btn.innerText = `${['A', 'B', 'C', 'D'][idx]}. ${opt}`;
-                    btn.onclick = () => checkAnswer(idx === q.a, opt, q.options[q.a]);
+                    btn.onclick = () => checkAnswer(idx === q.a ? 1 : 0, q.maxPoints, opt, q.options[q.a]);
                     grid.appendChild(btn);
                 });
                 ansArea.appendChild(grid);
@@ -596,7 +601,7 @@
                     let isCorrect = val === q.answer;
                     if (q.answer === 'soccer' && val === 'football') isCorrect = true;
                     if (q.answer === 'bicycle' && val === 'bike') isCorrect = true;
-                    checkAnswer(isCorrect, val || '(left blank)', q.answer);
+                    checkAnswer(isCorrect ? 1 : 0, q.maxPoints, val || '(left blank)', q.answer);
                 };
                 const input = document.createElement('input');
                 input.type = "text";
@@ -649,20 +654,19 @@
             }
         }
 
-        function checkAnswer(isCorrect, userAnswer, correctAnswer) {
+        function checkAnswer(pointsEarned, maxPoints, userAnswer, correctAnswer) {
             if (!userData.answers) userData.answers = [];
-            userData.answers[currentQIndex] = isCorrect;
+            userData.answers[currentQIndex] = pointsEarned;
 
             userReviewData.push({
                 question: allQuestions[currentQIndex].q || allQuestions[currentQIndex].emoji,
                 userAnswer: userAnswer,
                 correctAnswer: correctAnswer,
-                isCorrect: isCorrect
+                pointsEarned: pointsEarned,
+                maxPoints: maxPoints
             });
 
-            if (isCorrect) {
-                userData.score += 10;
-            } 
+            userData.score += pointsEarned;
             
             // Sync to sheets periodically
             if (currentQIndex % 5 === 0) syncToGoogleSheets();
@@ -738,20 +742,29 @@
 
         function evaluateVoiceAnswer(transcript, q) {
             const text = transcript.toLowerCase();
-            let isCorrect = false;
+            let points = 0;
 
             if (q.type === 'respond') {
-                isCorrect = q.keywords.some(kw => text.includes(kw));
+                const isCorrect = q.keywords.some(kw => text.includes(kw));
+                points = isCorrect ? 1 : 0;
             } else if (q.type === 'read') {
                 let matchCount = 0;
                 q.keywords.forEach(kw => { if (text.includes(kw)) matchCount++; });
-                isCorrect = (matchCount / q.keywords.length) >= 0.7;
+                
+                const ratio = matchCount / q.keywords.length;
+                if (ratio >= 0.8) {
+                    points = 2; // Completely or almost fully correct
+                } else if (ratio >= 0.4) {
+                    points = 1; // Partially correct
+                } else {
+                    points = 0; // Really wrong
+                }
             }
 
             const correctStr = q.type === 'respond' ? `(Any keyword: ${q.keywords.join(', ')})` : q.q;
 
             setTimeout(() => {
-                checkAnswer(isCorrect, transcript, correctStr);
+                checkAnswer(points, q.maxPoints, transcript, correctStr);
             }, 500); 
         }
 
@@ -763,11 +776,10 @@
             syncToGoogleSheets(); // Final sync
             fetchLiveLeaderboard(); // Pull fresh data
             
-            const maxScore = allQuestions.length * 10;
-            const percentage = Math.round((userData.score / maxScore) * 100);
+            const percentage = Math.round((userData.score / TOTAL_MAX_SCORE) * 100);
             
             document.getElementById('final-score').innerText = userData.score;
-            document.getElementById('max-score').innerText = maxScore;
+            document.getElementById('max-score').innerText = TOTAL_MAX_SCORE;
             document.getElementById('final-percentage').innerText = percentage;
             
             switchScreen('screen-result');
@@ -800,20 +812,39 @@
 
             userReviewData.forEach((item, index) => {
                 const card = document.createElement('div');
-                card.className = "neon-box rounded-xl p-4 md:p-6 mb-4 text-left border " + (item.isCorrect ? "border-emerald-500/50" : "border-red-500/50");
-                const statusIcon = item.isCorrect 
-                    ? '<i class="fas fa-check-circle text-emerald-400 text-xl"></i>' 
-                    : '<i class="fas fa-times-circle text-red-400 text-xl"></i>';
+                const isPerfect = item.pointsEarned === item.maxPoints;
+                const isPartial = item.pointsEarned > 0 && item.pointsEarned < item.maxPoints;
+                
+                let borderColor = "border-red-500/50";
+                let statusIcon = '<i class="fas fa-times-circle text-red-400 text-xl"></i>';
+                let pointColor = "text-red-400";
+                
+                if (isPerfect) {
+                    borderColor = "border-emerald-500/50";
+                    statusIcon = '<i class="fas fa-check-circle text-emerald-400 text-xl"></i>';
+                    pointColor = "text-emerald-400";
+                } else if (isPartial) {
+                    borderColor = "border-yellow-500/50";
+                    statusIcon = '<i class="fas fa-minus-circle text-yellow-400 text-xl"></i>';
+                    pointColor = "text-yellow-400";
+                }
+
+                card.className = `neon-box rounded-xl p-4 md:p-6 mb-4 text-left border ${borderColor}`;
 
                 card.innerHTML = `
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
-                            <p class="text-sm text-slate-400 mb-1">Question ${index + 1}</p>
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-sm text-slate-400">Question ${index + 1}</p>
+                                <span class="font-bold ${pointColor} text-sm bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                    +${item.pointsEarned} / ${item.maxPoints} pts
+                                </span>
+                            </div>
                             <h4 class="text-lg md:text-xl text-white font-medium mb-4">${item.question}</h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                                     <p class="text-xs text-sky-300 mb-1">Your Answer</p>
-                                    <p class="${item.isCorrect ? 'text-emerald-300' : 'text-red-300'} font-medium">${item.userAnswer}</p>
+                                    <p class="${pointColor} font-medium">${item.userAnswer}</p>
                                 </div>
                                 <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                                     <p class="text-xs text-sky-300 mb-1">Correct Answer</p>
@@ -821,7 +852,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div>${statusIcon}</div>
+                        <div class="mt-1">${statusIcon}</div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -857,6 +888,8 @@
                 else if (index === 1) rankDisplay = '<i class="fas fa-medal text-gray-400 text-xl"></i>';
                 else if (index === 2) rankDisplay = '<i class="fas fa-medal text-amber-600 text-xl"></i>';
 
+                const percentage = Math.round((parseInt(u.score) / TOTAL_MAX_SCORE) * 100) || 0;
+
                 tr.innerHTML = `
                     <td class="p-4">${rankDisplay}</td>
                     <td class="p-4 flex items-center gap-2">
@@ -864,7 +897,7 @@
                         ${isMe ? '<span class="text-xs bg-sky-500 text-white px-2 py-0.5 rounded-full">You</span>' : ''}
                     </td>
                     <td class="p-4">${u.section}</td>
-                    <td class="p-4 text-right text-emerald-400 font-bold">${u.score}</td>
+                    <td class="p-4 text-right text-emerald-400 font-bold">${u.score} <span class="text-xs text-yellow-400 ml-1">(${percentage}%)</span></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -974,11 +1007,13 @@
                 const isDone = (u.completed === true || u.completed === "Completed");
                 const statusIcon = isDone ? '' : '<span class="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded ml-2">Playing</span>';
 
+                const percentage = Math.round((parseInt(u.score) / TOTAL_MAX_SCORE) * 100) || 0;
+
                 tr.innerHTML = `
                     <td class="p-4">${rankDisplay}</td>
                     <td class="p-4 font-medium text-slate-200">${u.englishName} ${u.chineseName} ${statusIcon}</td>
                     <td class="p-4 text-slate-400">${u.section}</td>
-                    <td class="p-4 text-right text-emerald-400 font-bold">${u.score}</td>
+                    <td class="p-4 text-right text-emerald-400 font-bold">${u.score} <span class="text-xs text-yellow-400 ml-1">(${percentage}%)</span></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1017,14 +1052,17 @@
             container.innerHTML = '';
 
             const q = allQuestions[index];
-            let correctCount = 0;
-            let incorrectCount = 0;
+            let fullCount = 0;
+            let partialCount = 0;
+            let zeroCount = 0;
+            let totalPointsEarned = 0;
             let totalAnswered = 0;
-            let correctStudents = [];
-            let incorrectStudents = [];
+            
+            let fullStudents = [];
+            let partialStudents = [];
+            let zeroStudents = [];
 
             allUsersData.forEach(student => {
-                // Because we store the JSON string in the sheet, parse it if necessary
                 let ansArray = [];
                 try {
                     ansArray = typeof student.answers === 'string' ? JSON.parse(student.answers) : student.answers;
@@ -1032,27 +1070,54 @@
 
                 if (ansArray && ansArray[index] !== undefined && ansArray[index] !== null) {
                     totalAnswered++;
-                    const studentLabel = `${student.section}-${student.seat} ${student.englishName}`;
-                    if (ansArray[index] === true || String(ansArray[index]) === "true") {
-                        correctCount++;
-                        correctStudents.push(studentLabel);
+                    let pts = Number(ansArray[index]);
+                    totalPointsEarned += pts;
+                    
+                    const studentLabel = `${student.section}-${student.seat} ${student.englishName} (${pts}pt)`;
+                    
+                    if (pts === q.maxPoints) {
+                        fullCount++;
+                        fullStudents.push(studentLabel);
+                    } else if (pts > 0) {
+                        partialCount++;
+                        partialStudents.push(studentLabel);
                     } else {
-                        incorrectCount++;
-                        incorrectStudents.push(studentLabel);
+                        zeroCount++;
+                        zeroStudents.push(studentLabel);
                     }
                 }
             });
 
-            const passRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
-            let qDisplay = q.q ? q.q : `Identify Emoji: ${q.emoji}`;
+            const maxPossiblePoints = totalAnswered * q.maxPoints;
+            const passRate = maxPossiblePoints > 0 ? Math.round((totalPointsEarned / maxPossiblePoints) * 100) : 0;
             
+            let qDisplay = q.q ? q.q : `Identify Emoji: ${q.emoji}`;
+            let partLabel = "";
+            if (q.part === 1) partLabel = `<span class="text-xs bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/30 font-medium">Part 1: Choice</span>`;
+            else if (q.part === 2) partLabel = `<span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30 font-medium">Part 2: Word ID</span>`;
+            else if (q.part === 3) partLabel = `<span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-medium">Part 3: Speaking (${q.maxPoints} pts)</span>`;
+
             const card = document.createElement('div');
             card.className = "bg-slate-900/60 p-5 rounded-xl border border-slate-700/50 flex flex-col gap-4";
+
+            let partialHtml = '';
+            if (q.maxPoints > 1) {
+                partialHtml = `
+                    <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                        <h4 class="text-yellow-400 font-bold mb-2 border-b border-yellow-500/30 pb-2"><i class="fas fa-minus-circle mr-2"></i> Partial Credit (${partialCount})</h4>
+                        <ul class="text-sm text-yellow-200/80 space-y-1 max-h-40 overflow-y-auto">
+                            ${partialStudents.length > 0 ? partialStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-yellow-500/50 italic">None</li>'}
+                        </ul>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center gap-2">
                             <span class="text-lg font-bold text-sky-400">Question ${index + 1}</span>
+                            ${partLabel}
                         </div>
                         <span class="text-slate-100 font-medium text-lg">${qDisplay}</span>
                     </div>
@@ -1063,19 +1128,20 @@
                     <div class="bg-red-500 h-full transition-all duration-300" style="width: ${totalAnswered > 0 ? 100 - passRate : 0}%"></div>
                 </div>
                 
-                <div class="text-sm text-slate-400 mb-2">Total Responses: ${totalAnswered} / ${allUsersData.length}</div>
+                <div class="text-sm text-slate-400 mb-2">Total Points Earned: ${totalPointsEarned} / ${maxPossiblePoints} (from ${totalAnswered} responses)</div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                     <div class="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
-                        <h4 class="text-emerald-400 font-bold mb-2 border-b border-emerald-500/30 pb-2"><i class="fas fa-check-circle mr-2"></i> Correct (${correctCount})</h4>
+                        <h4 class="text-emerald-400 font-bold mb-2 border-b border-emerald-500/30 pb-2"><i class="fas fa-check-circle mr-2"></i> Full Credit (${fullCount})</h4>
                         <ul class="text-sm text-emerald-200/80 space-y-1 max-h-40 overflow-y-auto">
-                            ${correctStudents.length > 0 ? correctStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-emerald-500/50 italic">No students yet</li>'}
+                            ${fullStudents.length > 0 ? fullStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-emerald-500/50 italic">None</li>'}
                         </ul>
                     </div>
+                    ${partialHtml}
                     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-                        <h4 class="text-red-400 font-bold mb-2 border-b border-red-500/30 pb-2"><i class="fas fa-times-circle mr-2"></i> Incorrect (${incorrectCount})</h4>
+                        <h4 class="text-red-400 font-bold mb-2 border-b border-red-500/30 pb-2"><i class="fas fa-times-circle mr-2"></i> Zero Credit (${zeroCount})</h4>
                         <ul class="text-sm text-red-200/80 space-y-1 max-h-40 overflow-y-auto">
-                            ${incorrectStudents.length > 0 ? incorrectStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-red-500/50 italic">No students yet</li>'}
+                            ${zeroStudents.length > 0 ? zeroStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-red-500/50 italic">None</li>'}
                         </ul>
                     </div>
                 </div>
