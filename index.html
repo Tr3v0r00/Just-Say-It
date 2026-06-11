@@ -100,7 +100,7 @@
     <!-- Background Particles -->
     <div class="particles" id="particles"></div>
 
-    <!-- Toast Notification System (Moved to Bottom) -->
+    <!-- Toast Notification System -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- MAIN APP CONTAINER -->
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                 <button type="submit" class="neon-button bg-emerald-500 text-white font-bold rounded-lg px-6 py-4 mt-4 text-lg w-full flex items-center justify-center gap-2">
-                    <span>Enter Game</span> <i class="fas fa-gamepad"></i>
+                    <span>Start Quiz</span> <i class="fas fa-play"></i>
                 </button>
             </form>
         </div>
@@ -173,20 +173,20 @@
             <div id="teacher-tab-monitor" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col gap-4">
                     <div>
-                        <h3 class="text-xl text-white mb-2 font-semibold">Quiz Status</h3>
-                        <p id="teacher-status-text" class="text-emerald-400 font-bold text-2xl mb-4">Waiting to start...</p>
+                        <h3 class="text-xl text-white mb-2 font-semibold">Quiz Controls</h3>
+                        <p class="text-sm text-slate-400 mb-4">Students can start the quiz immediately after logging in. No waiting room required.</p>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="teacherStartQuiz()" class="neon-button bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-play mr-1"></i> Start</button>
-                            <button onclick="teacherStopQuiz()" class="neon-button bg-red-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-stop mr-1"></i> Stop/Reset</button>
-                            <button onclick="exportScoresCSV()" class="neon-button bg-blue-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-file-csv mr-1"></i> Export CSV</button>
+                            <button onclick="exportScoresCSV()" class="neon-button bg-blue-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-file-csv mr-1"></i> Export CSV Backup</button>
+                            <button onclick="forceRefreshData()" class="neon-button bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-sync mr-1"></i> Refresh Data</button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 max-h-96 overflow-y-auto">
-                    <h3 class="text-xl text-white mb-4 font-semibold">Connected Students (<span id="connected-count">0</span>)</h3>
+                    <h3 class="text-xl text-white mb-4 font-semibold">Live Students (<span id="connected-count">0</span>)</h3>
                     <ul id="connected-list" class="space-y-2 text-sm text-slate-300">
                         <!-- Populated dynamically -->
+                        <li class="text-slate-500 italic text-center">Loading live data from Google Sheets...</li>
                     </ul>
                 </div>
             </div>
@@ -194,7 +194,6 @@
             <!-- Tab content: QUESTION STATS -->
             <div id="teacher-tab-stats" class="hidden">
                 <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-                    <!-- Grid View -->
                     <div id="stats-grid-view">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-xl text-white font-semibold">Question Analysis</h3>
@@ -205,7 +204,6 @@
                         </div>
                     </div>
                     
-                    <!-- Detailed View -->
                     <div id="stats-detail-view" class="hidden">
                         <button onclick="closeStatsDetail()" class="text-sky-400 hover:text-white mb-4 text-sm font-bold flex items-center transition"><i class="fas fa-arrow-left mr-2"></i> Back to Questions</button>
                         <div id="stats-detail-content" class="space-y-4">
@@ -216,18 +214,6 @@
             </div>
 
             <button onclick="switchScreen('screen-login')" class="mt-8 text-slate-400 hover:text-white transition"><i class="fas fa-arrow-left mr-2"></i> Logout</button>
-        </div>
-
-        <!-- ==================== SCREEN: WAITING ROOM ==================== -->
-        <div id="screen-waiting" class="screen hidden flex flex-col items-center justify-center text-center fade-in h-[60vh]">
-            <div class="relative w-32 h-32 mb-8">
-                <div class="absolute inset-0 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-                <div class="absolute inset-2 border-4 border-emerald-400 border-b-transparent rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
-                <i class="fas fa-hourglass-half absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl text-sky-300"></i>
-            </div>
-            <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 tracking-wide">Waiting for Teacher...</h2>
-            <p class="text-xl text-sky-300">Get ready to Just Say It!</p>
-            <p id="waiting-student-info" class="mt-8 text-slate-400"></p>
         </div>
 
         <!-- ==================== SCREEN: QUIZ ==================== -->
@@ -253,9 +239,8 @@
             <div class="neon-box rounded-2xl p-6 md:p-10 min-h-[300px] flex flex-col justify-center">
                 <h3 id="question-text" class="text-2xl md:text-3xl text-center font-medium mb-8">Question goes here?</h3>
                 
-                <!-- Dynamic Answer Area -->
                 <div id="answer-area" class="w-full">
-                    <!-- Populated by JS based on part type -->
+                    <!-- Populated by JS -->
                 </div>
             </div>
         </div>
@@ -279,7 +264,7 @@
                 </div>
 
                 <div class="flex items-center justify-between mb-6">
-                    <h3 id="leaderboard-title" class="text-2xl font-bold text-sky-400">Class 701 Leaderboard</h3>
+                    <h3 id="leaderboard-title" class="text-2xl font-bold text-sky-400">Class Leaderboard</h3>
                     <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full"><i class="fas fa-bolt animate-pulse mr-1"></i> Live Auto-updating</span>
                 </div>
                 
@@ -295,6 +280,7 @@
                         </thead>
                         <tbody id="leaderboard-body" class="divide-y divide-sky-900/30">
                             <!-- Populated dynamically -->
+                            <tr><td colspan="4" class="p-4 text-center text-slate-500"><i class="fas fa-sync animate-spin mr-2"></i> Loading scores...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -314,14 +300,15 @@
 
     </div>
 
-    <!-- Firebase SDKs (Modular) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Scripts (No Firebase, 100% Google Apps Script) -->
+    <script>
+        // ==========================================
+        // 1. GOOGLE APPS SCRIPT DATABASE URL
+        // ==========================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDK1Dql984I1Zbu3glW2M4gLOxGY-eUF8LP0_qFyvpZxYlkps3TcFoX5xvmELH-kKlbw/exec";
 
         // ==========================================
-        // QUIZ DATA
+        // 2. QUIZ DATA
         // ==========================================
         const quizData = {
             part1: [
@@ -344,8 +331,8 @@
                 { emoji: "🌞", answer: "sun" },
                 { emoji: "🌲", answer: "tree" },
                 { emoji: "📚", answer: "book" },
-                { emoji: "⚽", answer: "soccer" }, // accept football too in logic
-                { emoji: "🚲", answer: "bicycle" }, // accept bike too
+                { emoji: "⚽", answer: "soccer" }, 
+                { emoji: "🚲", answer: "bicycle" }, 
                 { emoji: "🎸", answer: "guitar" }
             ],
             part3: [
@@ -356,7 +343,6 @@
                 { type: "respond", q: "How's the weather today?", keywords: ["sunny", "cloudy", "rainy", "windy", "hot", "cold", "warm", "cool", "fine", "snowy"] },
                 { type: "respond", q: "What's the season?", keywords: ["spring", "summer", "fall", "autumn", "winter"] },
                 { type: "respond", q: "How are you today?", keywords: ["fine", "good", "great", "ok", "okay", "well", "happy", "tired", "sad", "not bad"] },
-                
                 { type: "read", q: "Sound drill words: cat, cap, cut, key, kite, go, get, give, girl, game, green, bag, big, back, cake", keywords: ["cat", "cap", "cut", "key", "kite", "go", "get", "give", "girl", "game", "green", "bag", "big", "back", "cake"] },
                 { type: "read", q: "Minimal pair: coat – goat", keywords: ["coat", "goat"] },
                 { type: "read", q: "Minimal pair: cap – gap", keywords: ["cap", "gap"] },
@@ -366,16 +352,14 @@
             ]
         };
 
-        // Combine into one array for easier indexing
         let allQuestions = [];
         quizData.part1.forEach((q) => allQuestions.push({ part: 1, ...q }));
         quizData.part2.forEach((q) => allQuestions.push({ part: 2, ...q }));
         quizData.part3.forEach((q) => allQuestions.push({ part: 3, ...q }));
 
         // ==========================================
-        // STATE VARIABLES
+        // 3. STATE VARIABLES
         // ==========================================
-        let currentUser = null;
         let userData = {
             chineseName: '',
             englishName: '',
@@ -383,21 +367,18 @@
             seat: '',
             score: 0,
             completed: false,
-            answers: [] // Stores true/false for each index matching allQuestions
+            answers: [] // Stores true/false for Item Analysis
         };
         let currentQIndex = 0;
         let userReviewData = [];
-        let allUsersData = [];
-        let globalGameState = { isStarted: false };
+        let allUsersData = []; // Fetched from Google Sheets
         let isTeacher = false;
-        let currentViewedQuestionIndex = -1; // Tracks which question stats are being viewed
-        
+        let currentViewedQuestionIndex = -1;
         let recognition = null;
         let isRecording = false;
-        let isOfflineMode = false;
 
         // ==========================================
-        // UI HELPERS (Moved to top so they always work)
+        // 4. UI HELPERS & INIT
         // ==========================================
         window.switchScreen = function(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -405,7 +386,7 @@
             if (target) {
                 target.classList.remove('hidden');
                 target.classList.remove('fade-in');
-                void target.offsetWidth; // trigger reflow
+                void target.offsetWidth; 
                 target.classList.add('fade-in');
             }
         };
@@ -425,27 +406,6 @@
             }, 3000);
         };
 
-        window.showTeacherLogin = function() {
-            switchScreen('screen-teacher-login');
-        };
-
-        // Firebase Setup
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-        const firebaseConfig = JSON.parse(firebaseConfigStr || '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'just-say-it-default';
-        
-        let app, auth, db;
-        try {
-            if (Object.keys(firebaseConfig).length > 0) {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-            }
-        } catch (e) {
-            console.error("Firebase Initialization Error:", e);
-        }
-
-        // Initialize particles
         function initParticles() {
             const container = document.getElementById('particles');
             for (let i = 0; i < 30; i++) {
@@ -462,101 +422,20 @@
         initParticles();
 
         // ==========================================
-        // FIREBASE & AUTH LOGIC (RULES STRICTLY FOLLOWED)
+        // 5. GOOGLE APPS SCRIPT API INTEGRATION
         // ==========================================
-        async function initAuthApp() {
-            if (!auth) {
-                showToast("Running Offline Mode. Real-time sync disabled.", "info");
-                isOfflineMode = true;
-                return;
-            }
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Auth Error:", err);
-                showToast("Database auth failed. Switching to offline mode.", "error");
-                isOfflineMode = true;
-            }
-        }
-
-        if (auth) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    setupFirestoreListeners();
-                }
-            });
-        }
-
-        function setupFirestoreListeners() {
-            if (!currentUser) return;
-
-            // Listen to Game State
-            const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
-            onSnapshot(stateDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    globalGameState = data;
-
-                    if (isTeacher) {
-                        updateTeacherUI();
-                    } else if (userData.chineseName && !userData.completed) {
-                        // Student logic
-                        if (globalGameState.isStarted) {
-                            if (currentQIndex === 0 && document.getElementById('screen-waiting').classList.contains('hidden') === false) {
-                                startQuizProper();
-                            }
-                        } else {
-                            if (!document.getElementById('screen-login').classList.contains('hidden') === false) {
-                                switchScreen('screen-waiting');
-                            }
-                        }
-                    }
-                }
-            }, (error) => { console.error("Listen error:", error); });
-
-            // Listen to all users for Leaderboard/Teacher panel
-            const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-            onSnapshot(usersColRef, (snapshot) => {
-                allUsersData = [];
-                snapshot.forEach(doc => {
-                    allUsersData.push({ id: doc.id, ...doc.data() });
-                });
-                
-                if (isTeacher) updateTeacherUI();
-                if (userData.completed) renderLeaderboardUI(currentLeaderboardMode);
-            }, (error) => { console.error("Users listen error:", error); });
-        }
-
-        async function saveUserProgress() {
-            if (!currentUser) return;
-            try {
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
-                await setDoc(userDocRef, userData, { merge: true });
-                
-                // Realtime sync to Google Sheet
-                syncToGoogleSheets();
-            } catch (e) {
-                console.error("Save error:", e);
-            }
-        }
-
-        // Send details to Google Sheets in background
+        
+        // PUSH DATA (POST)
         async function syncToGoogleSheets() {
-            // Hardcoded Web App URL
-            const url = "https://script.google.com/macros/s/AKfycbxDK1Dql984I1Zbu3glW2M4gLOxGY-eUF8LP0_qFyvpZxYlkps3TcFoX5xvmELH-kKlbw/exec";
-
             const payload = {
+                action: "saveScore",
                 section: userData.section,
                 seat: userData.seat,
                 englishName: userData.englishName,
                 chineseName: userData.chineseName,
                 score: userData.score,
-                completed: userData.completed
+                completed: userData.completed,
+                answers: userData.answers // For teacher item analysis
             };
 
             const indicator = document.getElementById('sync-indicator');
@@ -566,8 +445,8 @@
             }
 
             try {
-                // we send with 'no-cors' to bypass normal CORS limitations on Apps Script Web Apps
-                await fetch(url, {
+                // Using no-cors because Apps Script web apps enforce strict CORS policies on standard fetch
+                await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     cache: 'no-cache',
@@ -576,11 +455,11 @@
                 });
                 
                 if (indicator && userData.completed) {
-                    indicator.innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Saved to Spreadsheet in Real-time!`;
+                    indicator.innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Saved to Spreadsheet!`;
                     indicator.className = "text-xs text-emerald-400 mt-2 flex items-center justify-center gap-1";
                 }
             } catch (err) {
-                console.error("Google Sheets Sync Error:", err);
+                console.error("Sync Error:", err);
                 if (indicator && userData.completed) {
                     indicator.innerHTML = `<i class="fas fa-exclamation-triangle text-red-400"></i> Sync error (check connection)`;
                     indicator.className = "text-xs text-red-400 mt-2 flex items-center justify-center gap-1";
@@ -588,11 +467,34 @@
             }
         }
 
+        // PULL DATA (GET) - For Leaderboard and Teacher Dashboard
+        async function fetchLiveLeaderboard() {
+            try {
+                // Adding timestamp to URL to prevent browser caching
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getLeaderboard&t=" + new Date().getTime());
+                const data = await response.json();
+                
+                if (data && Array.isArray(data)) {
+                    allUsersData = data;
+                    if (isTeacher) updateTeacherUI();
+                    if (userData.completed) renderLeaderboardUI(currentLeaderboardMode);
+                }
+            } catch (err) {
+                console.log("Polling database...", err);
+            }
+        }
+
+        // Poll the database every 4 seconds
+        setInterval(() => {
+            if (isTeacher || userData.completed) {
+                fetchLiveLeaderboard();
+            }
+        }, 4000);
 
         // ==========================================
-        // LOGIN LOGIC
+        // 6. LOGIN & QUIZ LOGIC
         // ==========================================
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             
             userData.chineseName = document.getElementById('inp-cname').value.trim();
@@ -605,279 +507,12 @@
             currentQIndex = 0;
             userReviewData = [];
 
-            document.getElementById('waiting-student-info').innerText = `${userData.englishName} (${userData.chineseName}) - Class ${userData.section} Seat ${userData.seat}`;
-
-            if (isOfflineMode) {
-                showToast("Testing Offline Mode...", "success");
-                currentUser = { uid: 'local-test-user' }; // Mock user for offline testing
-                allUsersData.push({ id: currentUser.uid, ...userData });
-                startQuizProper();
-                return;
-            }
-
-            if (!currentUser) {
-                showToast("Connecting to server...", "info");
-                return;
-            }
-
-            await saveUserProgress();
-            
-            document.getElementById('waiting-student-info').innerText = `${userData.englishName} (${userData.chineseName}) - Class ${userData.section} Seat ${userData.seat}`;
-            
-            if (globalGameState.isStarted) {
-                startQuizProper();
-            } else {
-                switchScreen('screen-waiting');
-            }
+            // Directly start the quiz, bypassing waiting room
+            syncToGoogleSheets(); 
+            startQuizProper();
+            showToast("Quiz Started!", "success");
         });
 
-        // ==========================================
-        // TEACHER LOGIC
-        // ==========================================
-        window.switchTeacherTab = function(tabName) {
-            const btnMonitor = document.getElementById('tab-btn-monitor');
-            const btnStats = document.getElementById('tab-btn-stats');
-            const divMonitor = document.getElementById('teacher-tab-monitor');
-            const divStats = document.getElementById('teacher-tab-stats');
-
-            if (tabName === 'monitor') {
-                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
-                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
-                divMonitor.classList.remove('hidden');
-                divStats.classList.add('hidden');
-            } else {
-                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
-                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
-                divStats.classList.remove('hidden');
-                divMonitor.classList.add('hidden');
-                
-                // Always reset to grid view when switching to the Stats tab
-                closeStatsDetail();
-            }
-        };
-
-        window.loginTeacher = function() {
-            const pwd = document.getElementById('inp-teacher-pwd').value;
-            if (pwd === 'admin123') { 
-                isTeacher = true;
-                switchScreen('screen-teacher-panel');
-                updateTeacherUI();
-                showToast("Welcome Teacher", "success");
-            } else {
-                showToast("Incorrect password", "error");
-            }
-        };
-
-        function updateTeacherUI() {
-            if (!isTeacher) return;
-            
-            // 1. Update Live Monitor Tab
-            const statusTxt = document.getElementById('teacher-status-text');
-            if (globalGameState.isStarted) {
-                statusTxt.innerText = "Quiz is LIVE!";
-                statusTxt.className = "text-emerald-400 font-bold text-2xl mb-4";
-            } else {
-                statusTxt.innerText = "Waiting to start...";
-                statusTxt.className = "text-sky-400 font-bold text-2xl mb-4";
-            }
-
-            const list = document.getElementById('connected-list');
-            document.getElementById('connected-count').innerText = allUsersData.length;
-            list.innerHTML = '';
-            
-            // Sort by section then seat
-            const sorted = [...allUsersData].sort((a,b) => {
-                if(a.section !== b.section) return a.section.localeCompare(b.section);
-                return parseInt(a.seat) - parseInt(b.seat);
-            });
-
-            sorted.forEach(u => {
-                const li = document.createElement('li');
-                const status = u.completed ? `<span class="text-emerald-500">(Done: ${u.score})</span>` : `<span class="text-yellow-500">(Playing)</span>`;
-                li.innerHTML = `<strong>${u.section}-${u.seat}</strong> ${u.englishName} ${u.chineseName} ${status}`;
-                list.appendChild(li);
-            });
-
-            // 2. Update Question Statistics Tab
-            updateQuestionStatsUI();
-        }
-
-        function updateQuestionStatsUI() {
-            if (currentViewedQuestionIndex >= 0) {
-                // If currently viewing a specific question, refresh that specific detail view
-                openStatsDetail(currentViewedQuestionIndex);
-                return;
-            }
-
-            const gridContainer = document.getElementById('stats-grid');
-            if (!gridContainer) return;
-            gridContainer.innerHTML = '';
-
-            if (allUsersData.length === 0) {
-                gridContainer.innerHTML = `<p class="col-span-full text-center text-slate-500 py-6">No students connected yet.</p>`;
-                return;
-            }
-
-            // Create buttons for each question
-            allQuestions.forEach((q, index) => {
-                const btn = document.createElement('button');
-                btn.className = "bg-slate-700 hover:bg-sky-600 text-white rounded-lg p-3 font-bold transition border border-slate-600 hover:border-sky-400 shadow-md flex items-center justify-center";
-                btn.innerText = `Q${index + 1}`;
-                btn.onclick = () => openStatsDetail(index);
-                gridContainer.appendChild(btn);
-            });
-        }
-
-        window.openStatsDetail = function(index) {
-            currentViewedQuestionIndex = index;
-            document.getElementById('stats-grid-view').classList.add('hidden');
-            document.getElementById('stats-detail-view').classList.remove('hidden');
-
-            const container = document.getElementById('stats-detail-content');
-            container.innerHTML = '';
-
-            const q = allQuestions[index];
-            let correctCount = 0;
-            let incorrectCount = 0;
-            let totalAnswered = 0;
-            
-            let correctStudents = [];
-            let incorrectStudents = [];
-
-            allUsersData.forEach(student => {
-                if (student.answers && student.answers[index] !== undefined) {
-                    totalAnswered++;
-                    const studentLabel = `${student.section}-${student.seat} ${student.englishName}`;
-                    if (student.answers[index] === true) {
-                        correctCount++;
-                        correctStudents.push(studentLabel);
-                    } else {
-                        incorrectCount++;
-                        incorrectStudents.push(studentLabel);
-                    }
-                }
-            });
-
-            const passRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
-            
-            let qDisplay = q.q ? q.q : `Identify Emoji: ${q.emoji}`;
-            let partLabel = "";
-            if (q.part === 1) partLabel = `<span class="text-xs bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/30 font-medium">Part 1: Choice</span>`;
-            else if (q.part === 2) partLabel = `<span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30 font-medium">Part 2: Word ID</span>`;
-            else if (q.part === 3) partLabel = `<span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-medium">Part 3: Speaking</span>`;
-
-            const card = document.createElement('div');
-            card.className = "bg-slate-900/60 p-5 rounded-xl border border-slate-700/50 flex flex-col gap-4";
-
-            card.innerHTML = `
-                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-                    <div class="flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg font-bold text-sky-400">Question ${index + 1}</span>
-                            ${partLabel}
-                        </div>
-                        <span class="text-slate-100 font-medium text-lg">${qDisplay}</span>
-                    </div>
-                </div>
-
-                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden flex my-2 border border-slate-700">
-                    <div class="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-white" style="width: ${passRate}%">${passRate > 10 ? passRate + '%' : ''}</div>
-                    <div class="bg-red-500 h-full transition-all duration-300" style="width: ${totalAnswered > 0 ? 100 - passRate : 0}%"></div>
-                </div>
-                
-                <div class="text-sm text-slate-400 mb-2">
-                    Total Responses: ${totalAnswered} / ${allUsersData.length}
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                    <div class="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
-                        <h4 class="text-emerald-400 font-bold mb-2 border-b border-emerald-500/30 pb-2"><i class="fas fa-check-circle mr-2"></i> Correct (${correctCount})</h4>
-                        <ul class="text-sm text-emerald-200/80 space-y-1 max-h-40 overflow-y-auto">
-                            ${correctStudents.length > 0 ? correctStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-emerald-500/50 italic">No students yet</li>'}
-                        </ul>
-                    </div>
-                    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-                        <h4 class="text-red-400 font-bold mb-2 border-b border-red-500/30 pb-2"><i class="fas fa-times-circle mr-2"></i> Incorrect (${incorrectCount})</h4>
-                        <ul class="text-sm text-red-200/80 space-y-1 max-h-40 overflow-y-auto">
-                            ${incorrectStudents.length > 0 ? incorrectStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-red-500/50 italic">No students yet</li>'}
-                        </ul>
-                    </div>
-                </div>
-            `;
-
-            container.appendChild(card);
-        };
-
-        window.closeStatsDetail = function() {
-            currentViewedQuestionIndex = -1;
-            document.getElementById('stats-grid-view').classList.remove('hidden');
-            document.getElementById('stats-detail-view').classList.add('hidden');
-            updateQuestionStatsUI();
-        };
-
-        window.teacherStartQuiz = async function() {
-            if (!currentUser) return;
-            try {
-                const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
-                await setDoc(stateDocRef, { isStarted: true }, { merge: true });
-                showToast("Quiz Started for everyone!", "success");
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
-        window.teacherStopQuiz = async function() {
-            if (!currentUser) return;
-            try {
-                const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
-                await setDoc(stateDocRef, { isStarted: false }, { merge: true });
-                showToast("Quiz Stopped/Reset.", "info");
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
-        window.exportScoresCSV = function() {
-            if (allUsersData.length === 0) {
-                showToast("No student data to export.", "error");
-                return;
-            }
-
-            // Create CSV content ( \uFEFF forces Excel to read Chinese characters correctly )
-            let csvContent = "Section,Seat,English Name,Chinese Name,Score,Status\n";
-
-            // Sort students by Section, then by Seat Number
-            const sorted = [...allUsersData].sort((a,b) => {
-                if(a.section !== b.section) return a.section.localeCompare(b.section);
-                return parseInt(a.seat) - parseInt(b.seat);
-            });
-
-            // Create rows
-            sorted.forEach(u => {
-                const status = u.completed ? "Completed" : "Playing";
-                const ename = `"${u.englishName}"`; // Quotes prevent commas in names from breaking the columns
-                const cname = `"${u.chineseName}"`;
-                const row = `${u.section},${u.seat},${ename},${cname},${u.score},${status}`;
-                csvContent += row + "\n";
-            });
-
-            // Trigger download
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Grade7_Quiz_Scores.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            showToast("Scores downloaded successfully!", "success");
-        };
-
-        // ==========================================
-        // QUIZ LOGIC
-        // ==========================================
         function startQuizProper() {
             switchScreen('screen-quiz');
             renderQuestion();
@@ -891,7 +526,6 @@
 
             const q = allQuestions[currentQIndex];
             
-            // Update Header
             document.getElementById('quiz-progress-text').innerText = `Question ${currentQIndex + 1} of ${allQuestions.length}`;
             document.getElementById('progress-bar').style.width = `${((currentQIndex) / allQuestions.length) * 100}%`;
             document.getElementById('live-score').innerText = userData.score;
@@ -925,7 +559,6 @@
                 form.onsubmit = (e) => {
                     e.preventDefault();
                     const val = input.value.trim().toLowerCase();
-                    // special case for soccer/football, bike/bicycle
                     let isCorrect = val === q.answer;
                     if (q.answer === 'soccer' && val === 'football') isCorrect = true;
                     if (q.answer === 'bicycle' && val === 'bike') isCorrect = true;
@@ -945,8 +578,6 @@
                 form.appendChild(input);
                 form.appendChild(btn);
                 ansArea.appendChild(form);
-                
-                // auto focus
                 setTimeout(() => input.focus(), 100);
             }
             else if (q.part === 3) {
@@ -967,7 +598,6 @@
                 feedback.className = "text-slate-300 italic h-6";
                 feedback.innerText = "Click mic to speak...";
 
-                // Fallback for browsers without speech recognition
                 const fallbackBtn = document.createElement('button');
                 fallbackBtn.className = "text-xs text-slate-500 underline mt-4 hover:text-white";
                 fallbackBtn.innerText = "Mic not working? Type answer instead";
@@ -986,13 +616,9 @@
         }
 
         function checkAnswer(isCorrect, userAnswer, correctAnswer) {
-            // Setup array safely
             if (!userData.answers) userData.answers = [];
-            
-            // Record array element
             userData.answers[currentQIndex] = isCorrect;
 
-            // Record answer for review (local storage breakdown)
             userReviewData.push({
                 question: allQuestions[currentQIndex].q || allQuestions[currentQIndex].emoji,
                 userAnswer: userAnswer,
@@ -1001,11 +627,12 @@
             });
 
             if (isCorrect) {
-                userData.score += 10; // 10 points per question
+                userData.score += 10;
             } 
-            saveUserProgress(); // save score and answer array immediately
             
-            // tiny delay
+            // Sync to sheets periodically
+            if (currentQIndex % 5 === 0) syncToGoogleSheets();
+            
             setTimeout(() => {
                 currentQIndex++;
                 renderQuestion();
@@ -1013,7 +640,7 @@
         }
 
         // ==========================================
-        // VOICE RECOGNITION LOGIC
+        // 7. VOICE RECOGNITION
         // ==========================================
         function initSpeechRecognition() {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1023,7 +650,7 @@
                 recognition.interimResults = false;
                 recognition.lang = 'en-US';
             } else {
-                console.warn("Speech Recognition not supported in this browser.");
+                console.warn("Speech Recognition not supported.");
             }
         }
         initSpeechRecognition();
@@ -1059,7 +686,6 @@
             };
 
             recognition.onerror = (event) => {
-                console.error(event.error);
                 feedback.innerText = "Error listening. Try again or use text fallback.";
                 feedback.classList.remove('text-red-400');
                 isRecording = false;
@@ -1073,11 +699,7 @@
                 micBtn.classList.remove('bg-red-500', 'mic-recording');
             };
 
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error(e);
-            }
+            try { recognition.start(); } catch (e) { console.error(e); }
         }
 
         function evaluateVoiceAnswer(transcript, q) {
@@ -1085,19 +707,13 @@
             let isCorrect = false;
 
             if (q.type === 'respond') {
-                // If it contains any of the acceptable keywords
                 isCorrect = q.keywords.some(kw => text.includes(kw));
             } else if (q.type === 'read') {
-                // Fuzzy match: calculate how many keywords were said
                 let matchCount = 0;
-                q.keywords.forEach(kw => {
-                    if (text.includes(kw)) matchCount++;
-                });
-                // Pass if at least 70% of keywords are recognized
+                q.keywords.forEach(kw => { if (text.includes(kw)) matchCount++; });
                 isCorrect = (matchCount / q.keywords.length) >= 0.7;
             }
 
-            // Define correct answer string for review
             const correctStr = q.type === 'respond' ? `(Any keyword: ${q.keywords.join(', ')})` : q.q;
 
             setTimeout(() => {
@@ -1106,11 +722,12 @@
         }
 
         // ==========================================
-        // FINISH & LEADERBOARD LOGIC
+        // 8. FINISH & RESULTS
         // ==========================================
         function finishQuiz() {
             userData.completed = true;
-            saveUserProgress();
+            syncToGoogleSheets(); // Final sync
+            fetchLiveLeaderboard(); // Pull fresh data
             
             document.getElementById('final-score').innerText = userData.score;
             document.getElementById('max-score').innerText = allQuestions.length * 10;
@@ -1118,12 +735,10 @@
             renderLeaderboardUI('class');
         }
 
-        let currentLeaderboardMode = 'class'; // 'class' or 'grade'
+        let currentLeaderboardMode = 'class';
 
         window.showLeaderboard = function(mode) {
             currentLeaderboardMode = mode;
-            
-            // Toggle button styles
             const btnClass = document.getElementById('btn-rank-class');
             const btnGrade = document.getElementById('btn-rank-grade');
 
@@ -1136,7 +751,6 @@
                 btnClass.className = "neon-button bg-slate-700 text-slate-300 hover:text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto border border-slate-600";
                 document.getElementById('leaderboard-title').innerText = "Grade 7 Leaderboard";
             }
-
             renderLeaderboardUI(mode);
         }
 
@@ -1148,7 +762,6 @@
             userReviewData.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = "neon-box rounded-xl p-4 md:p-6 mb-4 text-left border " + (item.isCorrect ? "border-emerald-500/50" : "border-red-500/50");
-                
                 const statusIcon = item.isCorrect 
                     ? '<i class="fas fa-check-circle text-emerald-400 text-xl"></i>' 
                     : '<i class="fas fa-times-circle text-red-400 text-xl"></i>';
@@ -1158,19 +771,14 @@
                         <div class="flex-1">
                             <p class="text-sm text-slate-400 mb-1">Question ${index + 1}</p>
                             <h4 class="text-lg md:text-xl text-white font-medium mb-4">${item.question}</h4>
-                            
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                                     <p class="text-xs text-sky-300 mb-1">Your Answer</p>
-                                    <p class="${item.isCorrect ? 'text-emerald-300' : 'text-red-300'} font-medium">
-                                        ${item.userAnswer}
-                                    </p>
+                                    <p class="${item.isCorrect ? 'text-emerald-300' : 'text-red-300'} font-medium">${item.userAnswer}</p>
                                 </div>
                                 <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                                     <p class="text-xs text-sky-300 mb-1">Correct Answer</p>
-                                    <p class="text-emerald-300 font-medium">
-                                        ${item.correctAnswer}
-                                    </p>
+                                    <p class="text-emerald-300 font-medium">${item.correctAnswer}</p>
                                 </div>
                             </div>
                         </div>
@@ -1185,14 +793,13 @@
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = '';
 
-            let filteredUsers = [...allUsersData].filter(u => u.completed);
+            let filteredUsers = [...allUsersData].filter(u => u.completed === true || u.completed === "Completed");
 
             if (mode === 'class') {
-                filteredUsers = filteredUsers.filter(u => u.section === userData.section);
+                filteredUsers = filteredUsers.filter(u => String(u.section) === String(userData.section));
             }
 
-            // Sort by score descending
-            filteredUsers.sort((a, b) => b.score - a.score);
+            filteredUsers.sort((a, b) => parseInt(b.score) - parseInt(a.score));
 
             if (filteredUsers.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Waiting for players to finish...</td></tr>`;
@@ -1201,15 +808,11 @@
 
             filteredUsers.forEach((u, index) => {
                 const tr = document.createElement('tr');
-                const isMe = u.id === currentUser.uid;
+                const isMe = String(u.seat) === String(userData.seat) && String(u.section) === String(userData.section);
                 
-                if (isMe) {
-                    tr.className = "bg-sky-900/40 font-bold text-white";
-                } else {
-                    tr.className = "hover:bg-slate-800/50 transition";
-                }
+                if (isMe) tr.className = "bg-sky-900/40 font-bold text-white";
+                else tr.className = "hover:bg-slate-800/50 transition";
 
-                // Medal logic
                 let rankDisplay = index + 1;
                 if (index === 0) rankDisplay = '<i class="fas fa-medal text-yellow-400 text-xl"></i>';
                 else if (index === 1) rankDisplay = '<i class="fas fa-medal text-gray-400 text-xl"></i>';
@@ -1228,17 +831,204 @@
             });
         }
 
-        // Auto-refresh the Leaderboard UI every 3 seconds to ensure real-time visual alignment
-        setInterval(() => {
-            if (userData.completed) {
-                renderLeaderboardUI(currentLeaderboardMode);
+        // ==========================================
+        // 9. TEACHER PANEL
+        // ==========================================
+        window.showTeacherLogin = () => switchScreen('screen-teacher-login');
+        
+        window.loginTeacher = function() {
+            const pwd = document.getElementById('inp-teacher-pwd').value;
+            if (pwd === 'admin123') { 
+                isTeacher = true;
+                switchScreen('screen-teacher-panel');
+                fetchLiveLeaderboard(); // trigger immediate fetch
+                showToast("Welcome Teacher", "success");
+            } else {
+                showToast("Incorrect password", "error");
             }
-        }, 3000);
+        };
 
-        // INIT
-        window.addEventListener('DOMContentLoaded', () => {
-            initAuthApp();
-        });
+        window.switchTeacherTab = function(tabName) {
+            const btnMonitor = document.getElementById('tab-btn-monitor');
+            const btnStats = document.getElementById('tab-btn-stats');
+            const divMonitor = document.getElementById('teacher-tab-monitor');
+            const divStats = document.getElementById('teacher-tab-stats');
+
+            if (tabName === 'monitor') {
+                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
+                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
+                divMonitor.classList.remove('hidden');
+                divStats.classList.add('hidden');
+            } else {
+                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
+                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
+                divStats.classList.remove('hidden');
+                divMonitor.classList.add('hidden');
+                closeStatsDetail();
+            }
+        };
+
+        window.forceRefreshData = function() {
+            showToast("Fetching live data...", "info");
+            fetchLiveLeaderboard();
+        };
+
+        function updateTeacherUI() {
+            if (!isTeacher) return;
+            const list = document.getElementById('connected-list');
+            document.getElementById('connected-count').innerText = allUsersData.length;
+            list.innerHTML = '';
+            
+            const sorted = [...allUsersData].sort((a,b) => {
+                if(String(a.section) !== String(b.section)) return String(a.section).localeCompare(String(b.section));
+                return parseInt(a.seat) - parseInt(b.seat);
+            });
+
+            if(sorted.length === 0) {
+                list.innerHTML = '<li class="text-slate-500 italic text-center">No students connected yet.</li>';
+            }
+
+            sorted.forEach(u => {
+                const isDone = (u.completed === true || u.completed === "Completed");
+                const li = document.createElement('li');
+                const status = isDone ? `<span class="text-emerald-500">(Done: ${u.score})</span>` : `<span class="text-yellow-500">(Playing)</span>`;
+                li.innerHTML = `<strong>${u.section}-${String(u.seat).padStart(2,'0')}</strong> ${u.englishName} ${u.chineseName} ${status}`;
+                list.appendChild(li);
+            });
+
+            updateQuestionStatsUI();
+        }
+
+        function updateQuestionStatsUI() {
+            if (currentViewedQuestionIndex >= 0) {
+                openStatsDetail(currentViewedQuestionIndex);
+                return;
+            }
+
+            const gridContainer = document.getElementById('stats-grid');
+            if (!gridContainer) return;
+            gridContainer.innerHTML = '';
+
+            if (allUsersData.length === 0) {
+                gridContainer.innerHTML = `<p class="col-span-full text-center text-slate-500 py-6">No students connected yet.</p>`;
+                return;
+            }
+
+            allQuestions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-700 hover:bg-sky-600 text-white rounded-lg p-3 font-bold transition border border-slate-600 hover:border-sky-400 shadow-md flex items-center justify-center";
+                btn.innerText = `Q${index + 1}`;
+                btn.onclick = () => openStatsDetail(index);
+                gridContainer.appendChild(btn);
+            });
+        }
+
+        window.openStatsDetail = function(index) {
+            currentViewedQuestionIndex = index;
+            document.getElementById('stats-grid-view').classList.add('hidden');
+            document.getElementById('stats-detail-view').classList.remove('hidden');
+
+            const container = document.getElementById('stats-detail-content');
+            container.innerHTML = '';
+
+            const q = allQuestions[index];
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let totalAnswered = 0;
+            let correctStudents = [];
+            let incorrectStudents = [];
+
+            allUsersData.forEach(student => {
+                // Because we store the JSON string in the sheet, parse it if necessary
+                let ansArray = [];
+                try {
+                    ansArray = typeof student.answers === 'string' ? JSON.parse(student.answers) : student.answers;
+                } catch(e) {}
+
+                if (ansArray && ansArray[index] !== undefined && ansArray[index] !== null) {
+                    totalAnswered++;
+                    const studentLabel = `${student.section}-${student.seat} ${student.englishName}`;
+                    if (ansArray[index] === true || String(ansArray[index]) === "true") {
+                        correctCount++;
+                        correctStudents.push(studentLabel);
+                    } else {
+                        incorrectCount++;
+                        incorrectStudents.push(studentLabel);
+                    }
+                }
+            });
+
+            const passRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+            let qDisplay = q.q ? q.q : `Identify Emoji: ${q.emoji}`;
+            
+            const card = document.createElement('div');
+            card.className = "bg-slate-900/60 p-5 rounded-xl border border-slate-700/50 flex flex-col gap-4";
+            card.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg font-bold text-sky-400">Question ${index + 1}</span>
+                        </div>
+                        <span class="text-slate-100 font-medium text-lg">${qDisplay}</span>
+                    </div>
+                </div>
+
+                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden flex my-2 border border-slate-700">
+                    <div class="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-white" style="width: ${passRate}%">${passRate > 10 ? passRate + '%' : ''}</div>
+                    <div class="bg-red-500 h-full transition-all duration-300" style="width: ${totalAnswered > 0 ? 100 - passRate : 0}%"></div>
+                </div>
+                
+                <div class="text-sm text-slate-400 mb-2">Total Responses: ${totalAnswered} / ${allUsersData.length}</div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                    <div class="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
+                        <h4 class="text-emerald-400 font-bold mb-2 border-b border-emerald-500/30 pb-2"><i class="fas fa-check-circle mr-2"></i> Correct (${correctCount})</h4>
+                        <ul class="text-sm text-emerald-200/80 space-y-1 max-h-40 overflow-y-auto">
+                            ${correctStudents.length > 0 ? correctStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-emerald-500/50 italic">No students yet</li>'}
+                        </ul>
+                    </div>
+                    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                        <h4 class="text-red-400 font-bold mb-2 border-b border-red-500/30 pb-2"><i class="fas fa-times-circle mr-2"></i> Incorrect (${incorrectCount})</h4>
+                        <ul class="text-sm text-red-200/80 space-y-1 max-h-40 overflow-y-auto">
+                            ${incorrectStudents.length > 0 ? incorrectStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-red-500/50 italic">No students yet</li>'}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        };
+
+        window.closeStatsDetail = function() {
+            currentViewedQuestionIndex = -1;
+            document.getElementById('stats-grid-view').classList.remove('hidden');
+            document.getElementById('stats-detail-view').classList.add('hidden');
+            updateQuestionStatsUI();
+        };
+
+        window.exportScoresCSV = function() {
+            if (allUsersData.length === 0) {
+                showToast("No student data to export.", "error");
+                return;
+            }
+            let csvContent = "Section,Seat,English Name,Chinese Name,Score,Status\n";
+            const sorted = [...allUsersData].sort((a,b) => {
+                if(a.section !== b.section) return String(a.section).localeCompare(String(b.section));
+                return parseInt(a.seat) - parseInt(b.seat);
+            });
+            sorted.forEach(u => {
+                const status = u.completed === "Completed" || u.completed === true ? "Completed" : "Playing";
+                csvContent += `${u.section},${u.seat},"${u.englishName}","${u.chineseName}",${u.score},${status}\n`;
+            });
+
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Grade7_Quiz_Scores.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
 
     </script>
 </body>
