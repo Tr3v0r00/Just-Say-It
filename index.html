@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Say It - Grade 7 Exam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom Glowing & Animations */
+        body {
+            background-color: #0f172a; /* tailwind slate-900 */
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #0ea5e9, 0 0 40px #0ea5e9, 0 0 80px #0ea5e9;
+        }
+
+        .neon-box {
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), inset 0 0 10px rgba(14, 165, 233, 0.2);
+            border: 1px solid rgba(14, 165, 233, 0.5);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .neon-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+        .neon-button:hover {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), inset 0 0 10px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .input-field {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            color: white;
+            transition: all 0.3s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.6);
+        }
+
+        /* Floating Particles Background */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            display: block;
+            pointer-events: none;
+            border-radius: 50%;
+            background: rgba(14, 165, 233, 0.3);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+            animation: float linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #0ea5e9; border-radius: 4px; }
+        
+        .mic-recording {
+            animation: pulse 1.5s infinite;
+            color: #ef4444; /* red-500 */
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Background Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Toast Notification System (Moved to Bottom) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="w-full max-w-4xl relative z-10">
+        
+        <!-- ==================== SCREEN: LOGIN ==================== -->
+        <div id="screen-login" class="screen relative neon-box rounded-2xl p-8 md:p-12 text-center w-full max-w-md mx-auto fade-in">
+            <button class="absolute top-4 right-4 text-slate-500 hover:text-sky-400 transition p-2 z-50 focus:outline-none" onclick="showTeacherLogin()" title="Teacher Access">
+                <i class="fas fa-lock text-xl"></i>
+            </button>
+            
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 neon-text text-sky-400 tracking-wider">Just Say It</h1>
+            <p class="text-slate-400 mb-8 text-sm uppercase tracking-widest">Grade 7 Examination</p>
+
+            <form id="login-form" class="flex flex-col gap-4 text-left">
+                <div>
+                    <label class="text-xs text-sky-300 ml-1">Chinese Name</label>
+                    <input type="text" id="inp-cname" required class="input-field w-full rounded-lg px-4 py-3" placeholder="e.g. 王小明">
+                </div>
+                <div>
+                    <label class="text-xs text-sky-300 ml-1">English Name</label>
+                    <input type="text" id="inp-ename" required class="input-field w-full rounded-lg px-4 py-3" placeholder="e.g. John">
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="text-xs text-sky-300 ml-1">Section</label>
+                        <select id="inp-section" required class="input-field w-full rounded-lg px-4 py-3">
+                            <option value="" disabled selected>Choose</option>
+                            <option value="701">701</option>
+                            <option value="702">702</option>
+                            <option value="703">703</option>
+                            <option value="704">704</option>
+                            <option value="705">705</option>
+                        </select>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="text-xs text-sky-300 ml-1">Seat Number</label>
+                        <input type="number" id="inp-seat" required min="1" max="50" class="input-field w-full rounded-lg px-4 py-3" placeholder="e.g. 15">
+                    </div>
+                </div>
+                <button type="submit" class="neon-button bg-emerald-500 text-white font-bold rounded-lg px-6 py-4 mt-4 text-lg w-full flex items-center justify-center gap-2">
+                    <span>Enter Game</span> <i class="fas fa-gamepad"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- ==================== SCREEN: TEACHER LOGIN ==================== -->
+        <div id="screen-teacher-login" class="screen hidden neon-box rounded-2xl p-8 text-center w-full max-w-sm mx-auto fade-in">
+            <h2 class="text-2xl font-bold text-sky-400 mb-4">Teacher Access</h2>
+            <input type="password" id="inp-teacher-pwd" class="input-field w-full rounded-lg px-4 py-3 mb-4" placeholder="Teacher Password">
+            <button onclick="loginTeacher()" class="neon-button bg-purple-600 text-white font-bold rounded-lg px-6 py-3 w-full mb-4">Login</button>
+            <button onclick="switchScreen('screen-login')" class="text-slate-400 hover:text-white text-sm underline">Back to Student Login</button>
+        </div>
+
+        <!-- ==================== SCREEN: TEACHER PANEL ==================== -->
+        <div id="screen-teacher-panel" class="screen hidden neon-box rounded-2xl p-6 md:p-8 w-full mx-auto fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-sky-500/30 pb-4 gap-4">
+                <h2 class="text-3xl font-bold text-sky-400">Teacher Control Panel</h2>
+                <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 w-full md:w-auto">
+                    <button id="tab-btn-monitor" onclick="switchTeacherTab('monitor')" class="px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none">
+                        <i class="fas fa-desktop mr-2"></i>Live Monitor
+                    </button>
+                    <button id="tab-btn-stats" onclick="switchTeacherTab('stats')" class="px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none">
+                        <i class="fas fa-chart-bar mr-2"></i>Question Stats
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab content: LIVE MONITOR -->
+            <div id="teacher-tab-monitor" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col gap-4">
+                    <div>
+                        <h3 class="text-xl text-white mb-2 font-semibold">Quiz Status</h3>
+                        <p id="teacher-status-text" class="text-emerald-400 font-bold text-2xl mb-4">Waiting to start...</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="teacherStartQuiz()" class="neon-button bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-play mr-1"></i> Start</button>
+                            <button onclick="teacherStopQuiz()" class="neon-button bg-red-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-stop mr-1"></i> Stop/Reset</button>
+                            <button onclick="exportScoresCSV()" class="neon-button bg-blue-600 text-white px-4 py-3 rounded-lg font-bold flex-1 text-sm whitespace-nowrap"><i class="fas fa-file-csv mr-1"></i> Export CSV</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 max-h-96 overflow-y-auto">
+                    <h3 class="text-xl text-white mb-4 font-semibold">Connected Students (<span id="connected-count">0</span>)</h3>
+                    <ul id="connected-list" class="space-y-2 text-sm text-slate-300">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab content: QUESTION STATS -->
+            <div id="teacher-tab-stats" class="hidden">
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                    <!-- Grid View -->
+                    <div id="stats-grid-view">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl text-white font-semibold">Question Analysis</h3>
+                            <p class="text-xs text-sky-300">Click an item to view stats</p>
+                        </div>
+                        <div id="stats-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-[500px] overflow-y-auto pr-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed View -->
+                    <div id="stats-detail-view" class="hidden">
+                        <button onclick="closeStatsDetail()" class="text-sky-400 hover:text-white mb-4 text-sm font-bold flex items-center transition"><i class="fas fa-arrow-left mr-2"></i> Back to Questions</button>
+                        <div id="stats-detail-content" class="space-y-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="switchScreen('screen-login')" class="mt-8 text-slate-400 hover:text-white transition"><i class="fas fa-arrow-left mr-2"></i> Logout</button>
+        </div>
+
+        <!-- ==================== SCREEN: WAITING ROOM ==================== -->
+        <div id="screen-waiting" class="screen hidden flex flex-col items-center justify-center text-center fade-in h-[60vh]">
+            <div class="relative w-32 h-32 mb-8">
+                <div class="absolute inset-0 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+                <div class="absolute inset-2 border-4 border-emerald-400 border-b-transparent rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                <i class="fas fa-hourglass-half absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl text-sky-300"></i>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 tracking-wide">Waiting for Teacher...</h2>
+            <p class="text-xl text-sky-300">Get ready to Just Say It!</p>
+            <p id="waiting-student-info" class="mt-8 text-slate-400"></p>
+        </div>
+
+        <!-- ==================== SCREEN: QUIZ ==================== -->
+        <div id="screen-quiz" class="screen hidden w-full max-w-3xl mx-auto fade-in">
+            <!-- Header -->
+            <div class="flex justify-between items-end mb-6 pb-4 border-b border-sky-500/30">
+                <div>
+                    <h2 id="quiz-part-title" class="text-2xl font-bold text-sky-400">Part 1: Multiple Choice</h2>
+                    <p id="quiz-progress-text" class="text-sm text-slate-400 mt-1">Question 1 of 30</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-sky-300 mb-1">Score</p>
+                    <p id="live-score" class="text-3xl font-bold text-emerald-400 neon-text">0</p>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800 rounded-full h-2.5 mb-8">
+                <div id="progress-bar" class="bg-sky-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Container -->
+            <div class="neon-box rounded-2xl p-6 md:p-10 min-h-[300px] flex flex-col justify-center">
+                <h3 id="question-text" class="text-2xl md:text-3xl text-center font-medium mb-8">Question goes here?</h3>
+                
+                <!-- Dynamic Answer Area -->
+                <div id="answer-area" class="w-full">
+                    <!-- Populated by JS based on part type -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN: RESULTS / LEADERBOARD ==================== -->
+        <div id="screen-result" class="screen hidden w-full max-w-4xl mx-auto fade-in">
+            <div class="text-center mb-10">
+                <i class="fas fa-trophy text-6xl text-yellow-400 mb-4 neon-text"></i>
+                <h2 class="text-4xl font-bold text-white mb-2">Quiz Completed!</h2>
+                <p class="text-xl text-sky-300">Your Score: <span id="final-score" class="font-bold text-3xl text-emerald-400">0</span> / <span id="max-score">300</span></p>
+                <div id="sync-indicator" class="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
+                    <i class="fas fa-sync animate-spin"></i> Synchronizing with Spreadsheet...
+                </div>
+            </div>
+
+            <div class="neon-box rounded-2xl p-6 md:p-8">
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+                    <button id="btn-rank-class" onclick="showLeaderboard('class')" class="neon-button bg-sky-600 text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto">Class Ranking</button>
+                    <button id="btn-rank-grade" onclick="showLeaderboard('grade')" class="neon-button bg-slate-700 text-slate-300 hover:text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto border border-slate-600">Grade 7 Ranking</button>
+                    <button onclick="showReviewScreen()" class="neon-button bg-purple-600 text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto">Review Answers</button>
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <h3 id="leaderboard-title" class="text-2xl font-bold text-sky-400">Class 701 Leaderboard</h3>
+                    <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full"><i class="fas fa-bolt animate-pulse mr-1"></i> Live Auto-updating</span>
+                </div>
+                
+                <div class="overflow-x-auto rounded-xl border border-sky-900/50 bg-slate-900/50">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-sky-900/40 text-sky-300 text-sm uppercase tracking-wider">
+                                <th class="p-4 rounded-tl-xl">Rank</th>
+                                <th class="p-4">Name</th>
+                                <th class="p-4">Section</th>
+                                <th class="p-4 text-right rounded-tr-xl">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y divide-sky-900/30">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN: REVIEW ANSWERS ==================== -->
+        <div id="screen-review" class="screen hidden w-full max-w-4xl mx-auto fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-sky-400">Quiz Review</h2>
+                <button onclick="switchScreen('screen-result')" class="neon-button bg-slate-700 text-white px-4 py-2 rounded-lg font-bold"><i class="fas fa-arrow-left mr-2"></i> Back to Results</button>
+            </div>
+            <div id="review-container" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2 pb-10">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // QUIZ DATA
+        // ==========================================
+        const quizData = {
+            part1: [
+                { q: "What is the capital of Taiwan?", options: ["Kaohsiung", "Taipei", "Taichung", "Tainan"], a: 1 },
+                { q: "Choose the correct verb: He ___ to school every day.", options: ["go", "goes", "going", "gone"], a: 1 },
+                { q: "What is the opposite of 'Beautiful'?", options: ["Ugly", "Pretty", "Smart", "Tall"], a: 0 },
+                { q: "A dog has four ___.", options: ["arms", "hands", "legs", "wings"], a: 2 },
+                { q: "Which word is a noun?", options: ["Quickly", "Happy", "Run", "Teacher"], a: 3 },
+                { q: "I am hungry. I want to ___.", options: ["sleep", "eat", "drink", "play"], a: 1 },
+                { q: "What color is the sky on a clear day?", options: ["Green", "Blue", "Red", "Yellow"], a: 1 },
+                { q: "The plural of 'child' is:", options: ["childs", "children", "childrens", "child"], a: 1 },
+                { q: "Which animal says 'Meow'?", options: ["Dog", "Cat", "Cow", "Bird"], a: 1 },
+                { q: "___ old are you?", options: ["Who", "What", "How", "Why"], a: 2 }
+            ],
+            part2: [
+                { emoji: "🍎", answer: "apple" },
+                { emoji: "🚗", answer: "car" },
+                { emoji: "🐱", answer: "cat" },
+                { emoji: "🏠", answer: "house" },
+                { emoji: "🌞", answer: "sun" },
+                { emoji: "🌲", answer: "tree" },
+                { emoji: "📚", answer: "book" },
+                { emoji: "⚽", answer: "soccer" }, // accept football too in logic
+                { emoji: "🚲", answer: "bicycle" }, // accept bike too
+                { emoji: "🎸", answer: "guitar" }
+            ],
+            part3: [
+                { type: "respond", q: "What day is it today?", keywords: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
+                { type: "respond", q: "What's the month?", keywords: ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"] },
+                { type: "respond", q: "What is the date?", keywords: ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth", "twenty", "thirtieth", "thirty", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"] },
+                { type: "respond", q: "What's our class time?", keywords: ["o'clock", "am", "pm", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirty", "forty", "fifteen", "half", "quarter"] },
+                { type: "respond", q: "How's the weather today?", keywords: ["sunny", "cloudy", "rainy", "windy", "hot", "cold", "warm", "cool", "fine", "snowy"] },
+                { type: "respond", q: "What's the season?", keywords: ["spring", "summer", "fall", "autumn", "winter"] },
+                { type: "respond", q: "How are you today?", keywords: ["fine", "good", "great", "ok", "okay", "well", "happy", "tired", "sad", "not bad"] },
+                
+                { type: "read", q: "Sound drill words: cat, cap, cut, key, kite, go, get, give, girl, game, green, bag, big, back, cake", keywords: ["cat", "cap", "cut", "key", "kite", "go", "get", "give", "girl", "game", "green", "bag", "big", "back", "cake"] },
+                { type: "read", q: "Minimal pair: coat – goat", keywords: ["coat", "goat"] },
+                { type: "read", q: "Minimal pair: cap – gap", keywords: ["cap", "gap"] },
+                { type: "read", q: "Minimal pair: cold – gold", keywords: ["cold", "gold"] },
+                { type: "read", q: "Minimal pair: came – game", keywords: ["came", "game"] },
+                { type: "read", q: "Minimal pair: back – bag", keywords: ["back", "bag"] }
+            ]
+        };
+
+        // Combine into one array for easier indexing
+        let allQuestions = [];
+        quizData.part1.forEach((q) => allQuestions.push({ part: 1, ...q }));
+        quizData.part2.forEach((q) => allQuestions.push({ part: 2, ...q }));
+        quizData.part3.forEach((q) => allQuestions.push({ part: 3, ...q }));
+
+        // ==========================================
+        // STATE VARIABLES
+        // ==========================================
+        let currentUser = null;
+        let userData = {
+            chineseName: '',
+            englishName: '',
+            section: '',
+            seat: '',
+            score: 0,
+            completed: false,
+            answers: [] // Stores true/false for each index matching allQuestions
+        };
+        let currentQIndex = 0;
+        let userReviewData = [];
+        let allUsersData = [];
+        let globalGameState = { isStarted: false };
+        let isTeacher = false;
+        let currentViewedQuestionIndex = -1; // Tracks which question stats are being viewed
+        
+        let recognition = null;
+        let isRecording = false;
+        let isOfflineMode = false;
+
+        // ==========================================
+        // UI HELPERS (Moved to top so they always work)
+        // ==========================================
+        window.switchScreen = function(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            const target = document.getElementById(screenId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.remove('fade-in');
+                void target.offsetWidth; // trigger reflow
+                target.classList.add('fade-in');
+            }
+        };
+
+        window.showToast = function(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-emerald-500', error: 'bg-red-500', info: 'bg-sky-500' };
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full pointer-events-auto`;
+            toast.innerHTML = msg;
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('translate-x-full'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        window.showTeacherLogin = function() {
+            switchScreen('screen-teacher-login');
+        };
+
+        // Firebase Setup
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const firebaseConfig = JSON.parse(firebaseConfigStr || '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'just-say-it-default';
+        
+        let app, auth, db;
+        try {
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            }
+        } catch (e) {
+            console.error("Firebase Initialization Error:", e);
+        }
+
+        // Initialize particles
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.width = Math.random() * 20 + 5 + 'px';
+                p.style.height = p.style.width;
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDuration = Math.random() * 10 + 10 + 's';
+                p.style.animationDelay = Math.random() * 10 + 's';
+                container.appendChild(p);
+            }
+        }
+        initParticles();
+
+        // ==========================================
+        // FIREBASE & AUTH LOGIC (RULES STRICTLY FOLLOWED)
+        // ==========================================
+        async function initAuthApp() {
+            if (!auth) {
+                showToast("Running Offline Mode. Real-time sync disabled.", "info");
+                isOfflineMode = true;
+                return;
+            }
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth Error:", err);
+                showToast("Database auth failed. Switching to offline mode.", "error");
+                isOfflineMode = true;
+            }
+        }
+
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    setupFirestoreListeners();
+                }
+            });
+        }
+
+        function setupFirestoreListeners() {
+            if (!currentUser) return;
+
+            // Listen to Game State
+            const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+            onSnapshot(stateDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    globalGameState = data;
+
+                    if (isTeacher) {
+                        updateTeacherUI();
+                    } else if (userData.chineseName && !userData.completed) {
+                        // Student logic
+                        if (globalGameState.isStarted) {
+                            if (currentQIndex === 0 && document.getElementById('screen-waiting').classList.contains('hidden') === false) {
+                                startQuizProper();
+                            }
+                        } else {
+                            if (!document.getElementById('screen-login').classList.contains('hidden') === false) {
+                                switchScreen('screen-waiting');
+                            }
+                        }
+                    }
+                }
+            }, (error) => { console.error("Listen error:", error); });
+
+            // Listen to all users for Leaderboard/Teacher panel
+            const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+            onSnapshot(usersColRef, (snapshot) => {
+                allUsersData = [];
+                snapshot.forEach(doc => {
+                    allUsersData.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (isTeacher) updateTeacherUI();
+                if (userData.completed) renderLeaderboardUI(currentLeaderboardMode);
+            }, (error) => { console.error("Users listen error:", error); });
+        }
+
+        async function saveUserProgress() {
+            if (!currentUser) return;
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
+                await setDoc(userDocRef, userData, { merge: true });
+                
+                // Realtime sync to Google Sheet
+                syncToGoogleSheets();
+            } catch (e) {
+                console.error("Save error:", e);
+            }
+        }
+
+        // Send details to Google Sheets in background
+        async function syncToGoogleSheets() {
+            // Hardcoded Web App URL
+            const url = "https://script.google.com/macros/s/AKfycbxDK1Dql984I1Zbu3glW2M4gLOxGY-eUF8LP0_qFyvpZxYlkps3TcFoX5xvmELH-kKlbw/exec";
+
+            const payload = {
+                section: userData.section,
+                seat: userData.seat,
+                englishName: userData.englishName,
+                chineseName: userData.chineseName,
+                score: userData.score,
+                completed: userData.completed
+            };
+
+            const indicator = document.getElementById('sync-indicator');
+            if (indicator && userData.completed) {
+                indicator.innerHTML = `<i class="fas fa-sync animate-spin text-sky-400"></i> Saving live to Spreadsheet...`;
+                indicator.className = "text-xs text-sky-400 mt-2 flex items-center justify-center gap-1";
+            }
+
+            try {
+                // we send with 'no-cors' to bypass normal CORS limitations on Apps Script Web Apps
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (indicator && userData.completed) {
+                    indicator.innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Saved to Spreadsheet in Real-time!`;
+                    indicator.className = "text-xs text-emerald-400 mt-2 flex items-center justify-center gap-1";
+                }
+            } catch (err) {
+                console.error("Google Sheets Sync Error:", err);
+                if (indicator && userData.completed) {
+                    indicator.innerHTML = `<i class="fas fa-exclamation-triangle text-red-400"></i> Sync error (check connection)`;
+                    indicator.className = "text-xs text-red-400 mt-2 flex items-center justify-center gap-1";
+                }
+            }
+        }
+
+
+        // ==========================================
+        // LOGIN LOGIC
+        // ==========================================
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            userData.chineseName = document.getElementById('inp-cname').value.trim();
+            userData.englishName = document.getElementById('inp-ename').value.trim();
+            userData.section = document.getElementById('inp-section').value;
+            userData.seat = document.getElementById('inp-seat').value;
+            userData.score = 0;
+            userData.completed = false;
+            userData.answers = [];
+            currentQIndex = 0;
+            userReviewData = [];
+
+            document.getElementById('waiting-student-info').innerText = `${userData.englishName} (${userData.chineseName}) - Class ${userData.section} Seat ${userData.seat}`;
+
+            if (isOfflineMode) {
+                showToast("Testing Offline Mode...", "success");
+                currentUser = { uid: 'local-test-user' }; // Mock user for offline testing
+                allUsersData.push({ id: currentUser.uid, ...userData });
+                startQuizProper();
+                return;
+            }
+
+            if (!currentUser) {
+                showToast("Connecting to server...", "info");
+                return;
+            }
+
+            await saveUserProgress();
+            
+            document.getElementById('waiting-student-info').innerText = `${userData.englishName} (${userData.chineseName}) - Class ${userData.section} Seat ${userData.seat}`;
+            
+            if (globalGameState.isStarted) {
+                startQuizProper();
+            } else {
+                switchScreen('screen-waiting');
+            }
+        });
+
+        // ==========================================
+        // TEACHER LOGIC
+        // ==========================================
+        window.switchTeacherTab = function(tabName) {
+            const btnMonitor = document.getElementById('tab-btn-monitor');
+            const btnStats = document.getElementById('tab-btn-stats');
+            const divMonitor = document.getElementById('teacher-tab-monitor');
+            const divStats = document.getElementById('teacher-tab-stats');
+
+            if (tabName === 'monitor') {
+                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
+                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
+                divMonitor.classList.remove('hidden');
+                divStats.classList.add('hidden');
+            } else {
+                btnStats.className = "px-4 py-2 rounded-md font-bold text-sm bg-sky-500 text-white flex-1 md:flex-none";
+                btnMonitor.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-400 hover:text-white flex-1 md:flex-none";
+                divStats.classList.remove('hidden');
+                divMonitor.classList.add('hidden');
+                
+                // Always reset to grid view when switching to the Stats tab
+                closeStatsDetail();
+            }
+        };
+
+        window.loginTeacher = function() {
+            const pwd = document.getElementById('inp-teacher-pwd').value;
+            if (pwd === 'admin123') { 
+                isTeacher = true;
+                switchScreen('screen-teacher-panel');
+                updateTeacherUI();
+                showToast("Welcome Teacher", "success");
+            } else {
+                showToast("Incorrect password", "error");
+            }
+        };
+
+        function updateTeacherUI() {
+            if (!isTeacher) return;
+            
+            // 1. Update Live Monitor Tab
+            const statusTxt = document.getElementById('teacher-status-text');
+            if (globalGameState.isStarted) {
+                statusTxt.innerText = "Quiz is LIVE!";
+                statusTxt.className = "text-emerald-400 font-bold text-2xl mb-4";
+            } else {
+                statusTxt.innerText = "Waiting to start...";
+                statusTxt.className = "text-sky-400 font-bold text-2xl mb-4";
+            }
+
+            const list = document.getElementById('connected-list');
+            document.getElementById('connected-count').innerText = allUsersData.length;
+            list.innerHTML = '';
+            
+            // Sort by section then seat
+            const sorted = [...allUsersData].sort((a,b) => {
+                if(a.section !== b.section) return a.section.localeCompare(b.section);
+                return parseInt(a.seat) - parseInt(b.seat);
+            });
+
+            sorted.forEach(u => {
+                const li = document.createElement('li');
+                const status = u.completed ? `<span class="text-emerald-500">(Done: ${u.score})</span>` : `<span class="text-yellow-500">(Playing)</span>`;
+                li.innerHTML = `<strong>${u.section}-${u.seat}</strong> ${u.englishName} ${u.chineseName} ${status}`;
+                list.appendChild(li);
+            });
+
+            // 2. Update Question Statistics Tab
+            updateQuestionStatsUI();
+        }
+
+        function updateQuestionStatsUI() {
+            if (currentViewedQuestionIndex >= 0) {
+                // If currently viewing a specific question, refresh that specific detail view
+                openStatsDetail(currentViewedQuestionIndex);
+                return;
+            }
+
+            const gridContainer = document.getElementById('stats-grid');
+            if (!gridContainer) return;
+            gridContainer.innerHTML = '';
+
+            if (allUsersData.length === 0) {
+                gridContainer.innerHTML = `<p class="col-span-full text-center text-slate-500 py-6">No students connected yet.</p>`;
+                return;
+            }
+
+            // Create buttons for each question
+            allQuestions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-700 hover:bg-sky-600 text-white rounded-lg p-3 font-bold transition border border-slate-600 hover:border-sky-400 shadow-md flex items-center justify-center";
+                btn.innerText = `Q${index + 1}`;
+                btn.onclick = () => openStatsDetail(index);
+                gridContainer.appendChild(btn);
+            });
+        }
+
+        window.openStatsDetail = function(index) {
+            currentViewedQuestionIndex = index;
+            document.getElementById('stats-grid-view').classList.add('hidden');
+            document.getElementById('stats-detail-view').classList.remove('hidden');
+
+            const container = document.getElementById('stats-detail-content');
+            container.innerHTML = '';
+
+            const q = allQuestions[index];
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let totalAnswered = 0;
+            
+            let correctStudents = [];
+            let incorrectStudents = [];
+
+            allUsersData.forEach(student => {
+                if (student.answers && student.answers[index] !== undefined) {
+                    totalAnswered++;
+                    const studentLabel = `${student.section}-${student.seat} ${student.englishName}`;
+                    if (student.answers[index] === true) {
+                        correctCount++;
+                        correctStudents.push(studentLabel);
+                    } else {
+                        incorrectCount++;
+                        incorrectStudents.push(studentLabel);
+                    }
+                }
+            });
+
+            const passRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+            
+            let qDisplay = q.q ? q.q : `Identify Emoji: ${q.emoji}`;
+            let partLabel = "";
+            if (q.part === 1) partLabel = `<span class="text-xs bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/30 font-medium">Part 1: Choice</span>`;
+            else if (q.part === 2) partLabel = `<span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30 font-medium">Part 2: Word ID</span>`;
+            else if (q.part === 3) partLabel = `<span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-medium">Part 3: Speaking</span>`;
+
+            const card = document.createElement('div');
+            card.className = "bg-slate-900/60 p-5 rounded-xl border border-slate-700/50 flex flex-col gap-4";
+
+            card.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg font-bold text-sky-400">Question ${index + 1}</span>
+                            ${partLabel}
+                        </div>
+                        <span class="text-slate-100 font-medium text-lg">${qDisplay}</span>
+                    </div>
+                </div>
+
+                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden flex my-2 border border-slate-700">
+                    <div class="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-white" style="width: ${passRate}%">${passRate > 10 ? passRate + '%' : ''}</div>
+                    <div class="bg-red-500 h-full transition-all duration-300" style="width: ${totalAnswered > 0 ? 100 - passRate : 0}%"></div>
+                </div>
+                
+                <div class="text-sm text-slate-400 mb-2">
+                    Total Responses: ${totalAnswered} / ${allUsersData.length}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                    <div class="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
+                        <h4 class="text-emerald-400 font-bold mb-2 border-b border-emerald-500/30 pb-2"><i class="fas fa-check-circle mr-2"></i> Correct (${correctCount})</h4>
+                        <ul class="text-sm text-emerald-200/80 space-y-1 max-h-40 overflow-y-auto">
+                            ${correctStudents.length > 0 ? correctStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-emerald-500/50 italic">No students yet</li>'}
+                        </ul>
+                    </div>
+                    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                        <h4 class="text-red-400 font-bold mb-2 border-b border-red-500/30 pb-2"><i class="fas fa-times-circle mr-2"></i> Incorrect (${incorrectCount})</h4>
+                        <ul class="text-sm text-red-200/80 space-y-1 max-h-40 overflow-y-auto">
+                            ${incorrectStudents.length > 0 ? incorrectStudents.map(s => `<li>${s}</li>`).join('') : '<li class="text-red-500/50 italic">No students yet</li>'}
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+        };
+
+        window.closeStatsDetail = function() {
+            currentViewedQuestionIndex = -1;
+            document.getElementById('stats-grid-view').classList.remove('hidden');
+            document.getElementById('stats-detail-view').classList.add('hidden');
+            updateQuestionStatsUI();
+        };
+
+        window.teacherStartQuiz = async function() {
+            if (!currentUser) return;
+            try {
+                const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+                await setDoc(stateDocRef, { isStarted: true }, { merge: true });
+                showToast("Quiz Started for everyone!", "success");
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        window.teacherStopQuiz = async function() {
+            if (!currentUser) return;
+            try {
+                const stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'gameState', 'main');
+                await setDoc(stateDocRef, { isStarted: false }, { merge: true });
+                showToast("Quiz Stopped/Reset.", "info");
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        window.exportScoresCSV = function() {
+            if (allUsersData.length === 0) {
+                showToast("No student data to export.", "error");
+                return;
+            }
+
+            // Create CSV content ( \uFEFF forces Excel to read Chinese characters correctly )
+            let csvContent = "Section,Seat,English Name,Chinese Name,Score,Status\n";
+
+            // Sort students by Section, then by Seat Number
+            const sorted = [...allUsersData].sort((a,b) => {
+                if(a.section !== b.section) return a.section.localeCompare(b.section);
+                return parseInt(a.seat) - parseInt(b.seat);
+            });
+
+            // Create rows
+            sorted.forEach(u => {
+                const status = u.completed ? "Completed" : "Playing";
+                const ename = `"${u.englishName}"`; // Quotes prevent commas in names from breaking the columns
+                const cname = `"${u.chineseName}"`;
+                const row = `${u.section},${u.seat},${ename},${cname},${u.score},${status}`;
+                csvContent += row + "\n";
+            });
+
+            // Trigger download
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Grade7_Quiz_Scores.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showToast("Scores downloaded successfully!", "success");
+        };
+
+        // ==========================================
+        // QUIZ LOGIC
+        // ==========================================
+        function startQuizProper() {
+            switchScreen('screen-quiz');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if (currentQIndex >= allQuestions.length) {
+                finishQuiz();
+                return;
+            }
+
+            const q = allQuestions[currentQIndex];
+            
+            // Update Header
+            document.getElementById('quiz-progress-text').innerText = `Question ${currentQIndex + 1} of ${allQuestions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQIndex) / allQuestions.length) * 100}%`;
+            document.getElementById('live-score').innerText = userData.score;
+
+            let partTitle = "Part 1: Multiple Choice";
+            if (q.part === 2) partTitle = "Part 2: Identification";
+            if (q.part === 3) partTitle = "Part 3: Just Say It!";
+            document.getElementById('quiz-part-title').innerText = partTitle;
+
+            const qText = document.getElementById('question-text');
+            const ansArea = document.getElementById('answer-area');
+            ansArea.innerHTML = '';
+
+            if (q.part === 1) {
+                qText.innerText = q.q;
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+                q.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "neon-button bg-slate-800 border border-sky-500/50 text-white rounded-xl p-4 text-left hover:bg-sky-900 transition";
+                    btn.innerText = `${['A', 'B', 'C', 'D'][idx]}. ${opt}`;
+                    btn.onclick = () => checkAnswer(idx === q.a, opt, q.options[q.a]);
+                    grid.appendChild(btn);
+                });
+                ansArea.appendChild(grid);
+            } 
+            else if (q.part === 2) {
+                qText.innerHTML = `<span class="text-8xl">${q.emoji}</span><br><span class="text-lg text-slate-400 mt-4 block">What is this? Type the English word.</span>`;
+                const form = document.createElement('form');
+                form.className = "flex flex-col items-center gap-4";
+                form.onsubmit = (e) => {
+                    e.preventDefault();
+                    const val = input.value.trim().toLowerCase();
+                    // special case for soccer/football, bike/bicycle
+                    let isCorrect = val === q.answer;
+                    if (q.answer === 'soccer' && val === 'football') isCorrect = true;
+                    if (q.answer === 'bicycle' && val === 'bike') isCorrect = true;
+                    checkAnswer(isCorrect, val || '(left blank)', q.answer);
+                };
+                const input = document.createElement('input');
+                input.type = "text";
+                input.className = "input-field w-full max-w-sm rounded-lg px-4 py-3 text-center text-xl";
+                input.placeholder = "Type here...";
+                input.required = true;
+                
+                const btn = document.createElement('button');
+                btn.type = "submit";
+                btn.className = "neon-button bg-sky-600 text-white font-bold rounded-lg px-8 py-3";
+                btn.innerText = "Submit";
+
+                form.appendChild(input);
+                form.appendChild(btn);
+                ansArea.appendChild(form);
+                
+                // auto focus
+                setTimeout(() => input.focus(), 100);
+            }
+            else if (q.part === 3) {
+                const instruction = q.type === 'respond' ? "Listen and Respond" : "Read Aloud";
+                qText.innerHTML = `<div class="text-sky-400 text-sm mb-2 uppercase tracking-widest">${instruction}</div>"${q.q}"`;
+                
+                const container = document.createElement('div');
+                container.className = "flex flex-col items-center gap-6";
+
+                const micBtn = document.createElement('button');
+                micBtn.id = "btn-mic";
+                micBtn.className = "w-24 h-24 rounded-full bg-sky-600 text-white text-3xl flex items-center justify-center transition-all shadow-[0_0_20px_rgba(14,165,233,0.5)]";
+                micBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
+                micBtn.onclick = () => toggleVoiceRecognition(q);
+
+                const feedback = document.createElement('p');
+                feedback.id = "voice-feedback";
+                feedback.className = "text-slate-300 italic h-6";
+                feedback.innerText = "Click mic to speak...";
+
+                // Fallback for browsers without speech recognition
+                const fallbackBtn = document.createElement('button');
+                fallbackBtn.className = "text-xs text-slate-500 underline mt-4 hover:text-white";
+                fallbackBtn.innerText = "Mic not working? Type answer instead";
+                fallbackBtn.onclick = () => {
+                    const ans = prompt("Type your answer:");
+                    if(ans !== null) {
+                        evaluateVoiceAnswer(ans || '(left blank)', q);
+                    }
+                };
+
+                container.appendChild(micBtn);
+                container.appendChild(feedback);
+                container.appendChild(fallbackBtn);
+                ansArea.appendChild(container);
+            }
+        }
+
+        function checkAnswer(isCorrect, userAnswer, correctAnswer) {
+            // Setup array safely
+            if (!userData.answers) userData.answers = [];
+            
+            // Record array element
+            userData.answers[currentQIndex] = isCorrect;
+
+            // Record answer for review (local storage breakdown)
+            userReviewData.push({
+                question: allQuestions[currentQIndex].q || allQuestions[currentQIndex].emoji,
+                userAnswer: userAnswer,
+                correctAnswer: correctAnswer,
+                isCorrect: isCorrect
+            });
+
+            if (isCorrect) {
+                userData.score += 10; // 10 points per question
+            } 
+            saveUserProgress(); // save score and answer array immediately
+            
+            // tiny delay
+            setTimeout(() => {
+                currentQIndex++;
+                renderQuestion();
+            }, 300);
+        }
+
+        // ==========================================
+        // VOICE RECOGNITION LOGIC
+        // ==========================================
+        function initSpeechRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (window.SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+            } else {
+                console.warn("Speech Recognition not supported in this browser.");
+            }
+        }
+        initSpeechRecognition();
+
+        function toggleVoiceRecognition(questionData) {
+            if (!recognition) {
+                showToast("Browser doesn't support voice. Please use the type fallback.", "error");
+                return;
+            }
+
+            const micBtn = document.getElementById('btn-mic');
+            const feedback = document.getElementById('voice-feedback');
+
+            if (isRecording) {
+                recognition.stop();
+                return;
+            }
+
+            recognition.onstart = () => {
+                isRecording = true;
+                micBtn.classList.remove('bg-sky-600');
+                micBtn.classList.add('bg-red-500', 'mic-recording');
+                feedback.innerText = "Listening...";
+                feedback.classList.add('text-red-400');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                feedback.innerText = `You said: "${transcript}"`;
+                feedback.classList.remove('text-red-400');
+                feedback.classList.add('text-white');
+                evaluateVoiceAnswer(transcript, questionData);
+            };
+
+            recognition.onerror = (event) => {
+                console.error(event.error);
+                feedback.innerText = "Error listening. Try again or use text fallback.";
+                feedback.classList.remove('text-red-400');
+                isRecording = false;
+                micBtn.classList.add('bg-sky-600');
+                micBtn.classList.remove('bg-red-500', 'mic-recording');
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                micBtn.classList.add('bg-sky-600');
+                micBtn.classList.remove('bg-red-500', 'mic-recording');
+            };
+
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function evaluateVoiceAnswer(transcript, q) {
+            const text = transcript.toLowerCase();
+            let isCorrect = false;
+
+            if (q.type === 'respond') {
+                // If it contains any of the acceptable keywords
+                isCorrect = q.keywords.some(kw => text.includes(kw));
+            } else if (q.type === 'read') {
+                // Fuzzy match: calculate how many keywords were said
+                let matchCount = 0;
+                q.keywords.forEach(kw => {
+                    if (text.includes(kw)) matchCount++;
+                });
+                // Pass if at least 70% of keywords are recognized
+                isCorrect = (matchCount / q.keywords.length) >= 0.7;
+            }
+
+            // Define correct answer string for review
+            const correctStr = q.type === 'respond' ? `(Any keyword: ${q.keywords.join(', ')})` : q.q;
+
+            setTimeout(() => {
+                checkAnswer(isCorrect, transcript, correctStr);
+            }, 500); 
+        }
+
+        // ==========================================
+        // FINISH & LEADERBOARD LOGIC
+        // ==========================================
+        function finishQuiz() {
+            userData.completed = true;
+            saveUserProgress();
+            
+            document.getElementById('final-score').innerText = userData.score;
+            document.getElementById('max-score').innerText = allQuestions.length * 10;
+            switchScreen('screen-result');
+            renderLeaderboardUI('class');
+        }
+
+        let currentLeaderboardMode = 'class'; // 'class' or 'grade'
+
+        window.showLeaderboard = function(mode) {
+            currentLeaderboardMode = mode;
+            
+            // Toggle button styles
+            const btnClass = document.getElementById('btn-rank-class');
+            const btnGrade = document.getElementById('btn-rank-grade');
+
+            if (mode === 'class') {
+                btnClass.className = "neon-button bg-sky-600 text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto";
+                btnGrade.className = "neon-button bg-slate-700 text-slate-300 hover:text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto border border-slate-600";
+                document.getElementById('leaderboard-title').innerText = `Class ${userData.section} Leaderboard`;
+            } else {
+                btnGrade.className = "neon-button bg-sky-600 text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto";
+                btnClass.className = "neon-button bg-slate-700 text-slate-300 hover:text-white px-6 py-3 rounded-lg font-bold flex-1 max-w-[200px] mx-auto border border-slate-600";
+                document.getElementById('leaderboard-title').innerText = "Grade 7 Leaderboard";
+            }
+
+            renderLeaderboardUI(mode);
+        }
+
+        window.showReviewScreen = function() {
+            switchScreen('screen-review');
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+
+            userReviewData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "neon-box rounded-xl p-4 md:p-6 mb-4 text-left border " + (item.isCorrect ? "border-emerald-500/50" : "border-red-500/50");
+                
+                const statusIcon = item.isCorrect 
+                    ? '<i class="fas fa-check-circle text-emerald-400 text-xl"></i>' 
+                    : '<i class="fas fa-times-circle text-red-400 text-xl"></i>';
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <p class="text-sm text-slate-400 mb-1">Question ${index + 1}</p>
+                            <h4 class="text-lg md:text-xl text-white font-medium mb-4">${item.question}</h4>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <p class="text-xs text-sky-300 mb-1">Your Answer</p>
+                                    <p class="${item.isCorrect ? 'text-emerald-300' : 'text-red-300'} font-medium">
+                                        ${item.userAnswer}
+                                    </p>
+                                </div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <p class="text-xs text-sky-300 mb-1">Correct Answer</p>
+                                    <p class="text-emerald-300 font-medium">
+                                        ${item.correctAnswer}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>${statusIcon}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        function renderLeaderboardUI(mode) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+
+            let filteredUsers = [...allUsersData].filter(u => u.completed);
+
+            if (mode === 'class') {
+                filteredUsers = filteredUsers.filter(u => u.section === userData.section);
+            }
+
+            // Sort by score descending
+            filteredUsers.sort((a, b) => b.score - a.score);
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Waiting for players to finish...</td></tr>`;
+                return;
+            }
+
+            filteredUsers.forEach((u, index) => {
+                const tr = document.createElement('tr');
+                const isMe = u.id === currentUser.uid;
+                
+                if (isMe) {
+                    tr.className = "bg-sky-900/40 font-bold text-white";
+                } else {
+                    tr.className = "hover:bg-slate-800/50 transition";
+                }
+
+                // Medal logic
+                let rankDisplay = index + 1;
+                if (index === 0) rankDisplay = '<i class="fas fa-medal text-yellow-400 text-xl"></i>';
+                else if (index === 1) rankDisplay = '<i class="fas fa-medal text-gray-400 text-xl"></i>';
+                else if (index === 2) rankDisplay = '<i class="fas fa-medal text-amber-600 text-xl"></i>';
+
+                tr.innerHTML = `
+                    <td class="p-4">${rankDisplay}</td>
+                    <td class="p-4 flex items-center gap-2">
+                        <span>${u.englishName} ${u.chineseName}</span>
+                        ${isMe ? '<span class="text-xs bg-sky-500 text-white px-2 py-0.5 rounded-full">You</span>' : ''}
+                    </td>
+                    <td class="p-4">${u.section}</td>
+                    <td class="p-4 text-right text-emerald-400 font-bold">${u.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Auto-refresh the Leaderboard UI every 3 seconds to ensure real-time visual alignment
+        setInterval(() => {
+            if (userData.completed) {
+                renderLeaderboardUI(currentLeaderboardMode);
+            }
+        }, 3000);
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuthApp();
+        });
+
+    </script>
+</body>
+</html>
