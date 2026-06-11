@@ -250,7 +250,7 @@
             <div class="text-center mb-10">
                 <i class="fas fa-trophy text-6xl text-yellow-400 mb-4 neon-text"></i>
                 <h2 class="text-4xl font-bold text-white mb-2">Quiz Completed!</h2>
-                <p class="text-xl text-sky-300">Your Score: <span id="final-score" class="font-bold text-3xl text-emerald-400">0</span> / <span id="max-score">300</span></p>
+                <p class="text-xl text-sky-300">Your Score: <span id="final-score" class="font-bold text-3xl text-emerald-400">0</span> / <span id="max-score">300</span> <span class="text-2xl font-bold text-yellow-400 ml-2">(<span id="final-percentage">0</span>%)</span></p>
                 <div id="sync-indicator" class="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
                     <i class="fas fa-sync animate-spin"></i> Synchronizing with Spreadsheet...
                 </div>
@@ -312,16 +312,16 @@
         // ==========================================
         const quizData = {
             part1: [
-                { q: "What is the capital of Taiwan?", options: ["Kaohsiung", "Taipei", "Taichung", "Tainan"], a: 1 },
-                { q: "Choose the correct verb: He ___ to school every day.", options: ["go", "goes", "going", "gone"], a: 1 },
-                { q: "What is the opposite of 'Beautiful'?", options: ["Ugly", "Pretty", "Smart", "Tall"], a: 0 },
-                { q: "A dog has four ___.", options: ["arms", "hands", "legs", "wings"], a: 2 },
-                { q: "Which word is a noun?", options: ["Quickly", "Happy", "Run", "Teacher"], a: 3 },
-                { q: "I am hungry. I want to ___.", options: ["sleep", "eat", "drink", "play"], a: 1 },
-                { q: "What color is the sky on a clear day?", options: ["Green", "Blue", "Red", "Yellow"], a: 1 },
-                { q: "The plural of 'child' is:", options: ["childs", "children", "childrens", "child"], a: 1 },
-                { q: "Which animal says 'Meow'?", options: ["Dog", "Cat", "Cow", "Bird"], a: 1 },
-                { q: "___ old are you?", options: ["Who", "What", "How", "Why"], a: 2 }
+                { q: "She ___ to the park every weekend.", options: ["go", "goes", "going", "gone"], a: 1 },
+                { q: "It is raining outside, so you should take an ___ with you.", options: ["apple", "umbrella", "elephant", "uniform"], a: 1 },
+                { q: "I am very hungry. Can I have something to ___?", options: ["drink", "read", "eat", "play"], a: 2 },
+                { q: "My brother and I ___ watching a movie right now.", options: ["am", "is", "are", "be"], a: 2 },
+                { q: "Yesterday, we ___ a great time at the zoo.", options: ["have", "has", "had", "having"], a: 2 },
+                { q: "The exam is ___ Monday morning.", options: ["in", "on", "at", "under"], a: 1 },
+                { q: "___ is your favorite teacher?", options: ["Who", "Where", "When", "Why"], a: 0 },
+                { q: "Please turn off the ___ before you go to sleep.", options: ["water", "lights", "door", "window"], a: 1 },
+                { q: "If you are tired, you should go to ___.", options: ["school", "bed", "work", "store"], a: 1 },
+                { q: "There are twelve ___ in a year.", options: ["days", "weeks", "months", "hours"], a: 2 }
             ],
             part2: [
                 { emoji: "🍎", answer: "apple" },
@@ -343,12 +343,11 @@
                 { type: "respond", q: "How's the weather today?", keywords: ["sunny", "cloudy", "rainy", "windy", "hot", "cold", "warm", "cool", "fine", "snowy"] },
                 { type: "respond", q: "What's the season?", keywords: ["spring", "summer", "fall", "autumn", "winter"] },
                 { type: "respond", q: "How are you today?", keywords: ["fine", "good", "great", "ok", "okay", "well", "happy", "tired", "sad", "not bad"] },
-                { type: "read", q: "Sound drill words: cat, cap, cut, key, kite, go, get, give, girl, game, green, bag, big, back, cake", keywords: ["cat", "cap", "cut", "key", "kite", "go", "get", "give", "girl", "game", "green", "bag", "big", "back", "cake"] },
-                { type: "read", q: "Minimal pair: coat – goat", keywords: ["coat", "goat"] },
-                { type: "read", q: "Minimal pair: cap – gap", keywords: ["cap", "gap"] },
-                { type: "read", q: "Minimal pair: cold – gold", keywords: ["cold", "gold"] },
-                { type: "read", q: "Minimal pair: came – game", keywords: ["came", "game"] },
-                { type: "read", q: "Minimal pair: back – bag", keywords: ["back", "bag"] }
+                { type: "read", q: "I usually wake up at seven o'clock.", keywords: ["usually", "wake", "seven", "o'clock"] },
+                { type: "read", q: "My favorite subject is English.", keywords: ["favorite", "subject", "english"] },
+                { type: "read", q: "We are going to the night market.", keywords: ["going", "night", "market"] },
+                { type: "read", q: "Can you help me with my homework?", keywords: ["help", "homework"] },
+                { type: "read", q: "The weather is very hot today.", keywords: ["weather", "very", "hot"] }
             ]
         };
 
@@ -729,8 +728,13 @@
             syncToGoogleSheets(); // Final sync
             fetchLiveLeaderboard(); // Pull fresh data
             
+            const maxScore = allQuestions.length * 10;
+            const percentage = Math.round((userData.score / maxScore) * 100);
+            
             document.getElementById('final-score').innerText = userData.score;
-            document.getElementById('max-score').innerText = allQuestions.length * 10;
+            document.getElementById('max-score').innerText = maxScore;
+            document.getElementById('final-percentage').innerText = percentage;
+            
             switchScreen('screen-result');
             renderLeaderboardUI('class');
         }
