@@ -252,6 +252,40 @@
             <button onclick="switchScreen('screen-login')" class="mt-8 text-slate-400 hover:text-white transition"><i class="fas fa-arrow-left mr-2"></i> Logout</button>
         </div>
 
+        <!-- ==================== SCREEN: EXAM RULES ==================== -->
+        <div id="screen-rules" class="screen hidden neon-box rounded-2xl p-8 md:p-12 text-center w-full max-w-2xl mx-auto fade-in mt-10">
+            <h2 class="text-3xl md:text-4xl font-bold text-red-400 mb-2 neon-text">⚠️ Exam Rules 考試規則 ⚠️</h2>
+            <p class="text-slate-400 mb-8 uppercase tracking-widest text-sm">Please read carefully before starting (開始前請仔細閱讀)</p>
+            
+            <div class="bg-slate-800/80 p-6 md:p-8 rounded-xl border border-slate-600 mb-8 text-left space-y-6 shadow-inner">
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-window-restore text-2xl text-sky-400 mt-1"></i>
+                    <div>
+                        <p class="text-lg text-white font-bold">1. Do not switch tabs or apps.</p>
+                        <p class="text-sky-300">考試期間請勿切換分頁或開啟其他應用程式，系統將會記錄違規次數。</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-microphone-alt text-2xl text-emerald-400 mt-1"></i>
+                    <div>
+                        <p class="text-lg text-white font-bold">2. Allow microphone access.</p>
+                        <p class="text-emerald-300">請確保您的麥克風已允許存取。在口說部分，請大聲且清楚地對著麥克風說話。</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-ban text-2xl text-red-400 mt-1"></i>
+                    <div>
+                        <p class="text-lg text-white font-bold">3. No retakes allowed.</p>
+                        <p class="text-red-300">一旦送出答案或重新整理網頁，您將無法重新進入考試。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="acceptRules()" class="neon-button bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl px-8 py-4 text-xl flex items-center justify-center gap-3 mx-auto w-full md:w-auto transition-all">
+                <span>I Understand (我了解)</span> <i class="fas fa-check-circle"></i>
+            </button>
+        </div>
+
         <!-- ==================== SCREEN: WAITING ROOM ==================== -->
         <div id="screen-waiting" class="screen hidden flex flex-col items-center justify-center text-center fade-in h-[60vh]">
             <div class="relative w-32 h-32 mb-8">
@@ -495,7 +529,7 @@
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && userData.startTime > 0 && !userData.completed) {
                 userData.cheatCount++;
-                showToast("⚠️ Warning: Do not switch tabs or apps during the exam!", "error");
+                showToast("⚠️ Warning: Do not switch tabs or apps during the exam!<br><span class='text-sm'>(警告：考試期間請勿切換分頁或應用程式！)</span>", "error");
                 syncToGoogleSheets(); // Force live sync to alert teacher
             }
         });
@@ -578,13 +612,45 @@
         // ==========================================
         // 6. LOGIN & QUIZ LOGIC
         // ==========================================
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            
+            // Show a loading spinner so they don't spam click while we check the database
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+            submitBtn.disabled = true;
+
+            const inputSection = document.getElementById('inp-section').value;
+            const inputSeat = document.getElementById('inp-seat').value;
+
+            try {
+                // Fetch the latest data from your Google Sheet
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getLeaderboard&t=" + new Date().getTime());
+                const data = await response.json();
+                
+                if (data && Array.isArray(data)) {
+                    // Look for an entry with the exact same Section and Seat
+                    const existingStudent = data.find(u => String(u.section) === String(inputSection) && String(u.seat) === String(inputSeat));
+                    
+                    if (existingStudent) {
+                        // STUDENT FOUND! BLOCK THEM!
+                        showToast("⚠️ Access Denied: You have already started or completed this exam.<br><span class='text-sm'>(拒絕存取：您已經開始或完成此考試。如有錯誤請告知老師。)</span>", "error");
+                        submitBtn.innerHTML = originalContent;
+                        submitBtn.disabled = false;
+                        return; // Stop the code here
+                    }
+                }
+            } catch (err) {
+                console.error("Verification error:", err);
+            }
+            
+            // If the code reaches here, they are a new student! Let them in.
             userData.chineseName = document.getElementById('inp-cname').value.trim();
             userData.englishName = document.getElementById('inp-ename').value.trim();
-            userData.section = document.getElementById('inp-section').value;
-            userData.seat = document.getElementById('inp-seat').value;
+            userData.section = inputSection;
+            userData.seat = inputSeat;
             userData.score = 0;
             userData.completed = false;
             userData.answers = [];
@@ -597,12 +663,22 @@
             // Directly start the quiz, bypassing waiting room
             syncToGoogleSheets(); 
             startQuizProper();
-            showToast("Quiz Prepared!", "success");
+            showToast("Quiz Prepared! (考試準備就緒！)", "success");
+
+            // Reset button back to normal
+            submitBtn.innerHTML = originalContent;
+            submitBtn.disabled = false;
         });
 
         function startQuizProper() {
-            showInstructionsForPart(1);
+            // First, show the rules screen
+            switchScreen('screen-rules');
         }
+
+        window.acceptRules = function() {
+            // After they accept rules, show Part 1 instructions
+            showInstructionsForPart(1);
+        };
 
         function showInstructionsForPart(partNum) {
             const title = document.getElementById('inst-title');
@@ -817,7 +893,7 @@
 
         function toggleVoiceRecognition(questionData) {
             if (!recognition) {
-                showToast("Browser doesn't support voice. Please use the type fallback.", "error");
+                showToast("Browser doesn't support voice. Please use the text fallback.<br><span class='text-sm'>(瀏覽器不支援語音。請使用文字輸入。)</span>", "error");
                 return;
             }
 
@@ -846,7 +922,7 @@
             };
 
             recognition.onerror = (event) => {
-                feedback.innerText = "Error listening. Try again or use text fallback.";
+                feedback.innerText = "Error listening. Try again or use text fallback. (語音辨識錯誤，請重試或輸入文字)";
                 feedback.classList.remove('text-red-400');
                 isRecording = false;
                 micBtn.classList.add('bg-sky-600');
