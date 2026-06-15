@@ -237,11 +237,12 @@
                                     <th class="p-4">Rank</th>
                                     <th class="p-4">Name</th>
                                     <th class="p-4">Section</th>
+                                    <th class="p-4">Time</th>
                                     <th class="p-4 text-right">Score</th>
                                 </tr>
                             </thead>
                             <tbody id="teacher-rank-body" class="divide-y divide-slate-800 text-sm">
-                                <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading ranking data...</td></tr>
+                                <tr><td colspan="5" class="p-4 text-center text-slate-500">Loading ranking data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -330,12 +331,13 @@
                                 <th class="p-4 rounded-tl-xl">Rank</th>
                                 <th class="p-4">Name</th>
                                 <th class="p-4">Section</th>
+                                <th class="p-4">Time</th>
                                 <th class="p-4 text-right rounded-tr-xl">Score</th>
                             </tr>
                         </thead>
                         <tbody id="leaderboard-body" class="divide-y divide-sky-900/30">
                             <!-- Populated dynamically -->
-                            <tr><td colspan="4" class="p-4 text-center text-slate-500"><i class="fas fa-sync animate-spin mr-2"></i> Loading scores...</td></tr>
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500"><i class="fas fa-sync animate-spin mr-2"></i> Loading scores...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -426,7 +428,10 @@
             seat: '',
             score: 0,
             completed: false,
-            answers: [] // Stores points for Item Analysis
+            answers: [], // Stores points for Item Analysis
+            startTime: 0,
+            timeSpent: 0,
+            cheatCount: 0
         };
         let currentQIndex = 0;
         let userReviewData = [];
@@ -480,12 +485,32 @@
         }
         initParticles();
 
+        function formatTimeSeconds(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- CHEAT DETECTION (Tab Switching) ---
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && userData.startTime > 0 && !userData.completed) {
+                userData.cheatCount++;
+                showToast("⚠️ Warning: Do not switch tabs or apps during the exam!", "error");
+                syncToGoogleSheets(); // Force live sync to alert teacher
+            }
+        });
+
         // ==========================================
         // 5. GOOGLE APPS SCRIPT API INTEGRATION
         // ==========================================
         
         // PUSH DATA (POST)
         async function syncToGoogleSheets() {
+            // Calculate live time if not finished
+            if (userData.startTime > 0 && !userData.completed) {
+                userData.timeSpent = Math.floor((Date.now() - userData.startTime) / 1000);
+            }
+
             const payload = {
                 action: "saveScore",
                 section: userData.section,
@@ -493,6 +518,8 @@
                 englishName: userData.englishName,
                 chineseName: userData.chineseName,
                 score: userData.score,
+                timeSpent: userData.timeSpent,
+                cheatCount: userData.cheatCount,
                 completed: userData.completed,
                 answers: userData.answers // For teacher item analysis
             };
@@ -561,6 +588,9 @@
             userData.score = 0;
             userData.completed = false;
             userData.answers = [];
+            userData.startTime = 0;
+            userData.timeSpent = 0;
+            userData.cheatCount = 0;
             currentQIndex = 0;
             userReviewData = [];
 
@@ -601,6 +631,9 @@
         }
 
         window.startPart = function() {
+            if (userData.startTime === 0) {
+                userData.startTime = Date.now(); // Start timer on Part 1 start
+            }
             switchScreen('screen-quiz');
             renderQuestion();
         };
@@ -880,6 +913,7 @@
         // ==========================================
         function finishQuiz() {
             userData.completed = true;
+            userData.timeSpent = Math.floor((Date.now() - userData.startTime) / 1000); // Finalize time
             syncToGoogleSheets(); // Final sync
             fetchLiveLeaderboard(); // Pull fresh data
             
@@ -976,10 +1010,15 @@
                 filteredUsers = filteredUsers.filter(u => String(u.section) === String(userData.section));
             }
 
-            filteredUsers.sort((a, b) => parseInt(b.score) - parseInt(a.score));
+            // Sort: 1st by Score (desc), 2nd by Time (asc)
+            filteredUsers.sort((a, b) => {
+                const scoreDiff = parseInt(b.score) - parseInt(a.score);
+                if (scoreDiff !== 0) return scoreDiff;
+                return parseInt(a.timeSpent || 0) - parseInt(b.timeSpent || 0);
+            });
 
             if (filteredUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Waiting for players to finish...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Waiting for players to finish...</td></tr>`;
                 return;
             }
 
@@ -996,6 +1035,11 @@
                 else if (index === 2) rankDisplay = '<i class="fas fa-medal text-amber-600 text-xl"></i>';
 
                 const percentage = Math.round((parseInt(u.score) / TOTAL_MAX_SCORE) * 100) || 0;
+                
+                let cheatWarning = '';
+                if (u.cheatCount > 0) {
+                    cheatWarning = `<span class="text-red-500 ml-2" title="Switched tabs ${u.cheatCount} times"><i class="fas fa-exclamation-triangle"></i> ${u.cheatCount}</span>`;
+                }
 
                 tr.innerHTML = `
                     <td class="p-4">${rankDisplay}</td>
@@ -1004,6 +1048,7 @@
                         ${isMe ? '<span class="text-xs bg-sky-500 text-white px-2 py-0.5 rounded-full">You</span>' : ''}
                     </td>
                     <td class="p-4">${u.section}</td>
+                    <td class="p-4 text-slate-400 font-mono text-sm">${formatTimeSeconds(u.timeSpent || 0)}${cheatWarning}</td>
                     <td class="p-4 text-right text-emerald-400 font-bold">${u.score} <span class="text-xs text-yellow-400 ml-1">(${percentage}%)</span></td>
                 `;
                 tbody.appendChild(tr);
@@ -1094,11 +1139,15 @@
                 filteredUsers = filteredUsers.filter(u => String(u.section) === String(filter));
             }
 
-            // Sort by score descending
-            filteredUsers.sort((a, b) => parseInt(b.score) - parseInt(a.score));
+            // Sort: 1st by Score (desc), 2nd by Time (asc)
+            filteredUsers.sort((a, b) => {
+                const scoreDiff = parseInt(b.score) - parseInt(a.score);
+                if (scoreDiff !== 0) return scoreDiff;
+                return parseInt(a.timeSpent || 0) - parseInt(b.timeSpent || 0);
+            });
 
             if (filteredUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No students found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No students found.</td></tr>`;
                 return;
             }
 
@@ -1115,11 +1164,17 @@
                 const statusIcon = isDone ? '' : '<span class="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded ml-2">Playing</span>';
 
                 const percentage = Math.round((parseInt(u.score) / TOTAL_MAX_SCORE) * 100) || 0;
+                
+                let cheatWarning = '';
+                if (u.cheatCount > 0) {
+                    cheatWarning = `<span class="text-red-500 ml-2" title="Switched tabs ${u.cheatCount} times"><i class="fas fa-exclamation-triangle"></i> ${u.cheatCount}</span>`;
+                }
 
                 tr.innerHTML = `
                     <td class="p-4">${rankDisplay}</td>
                     <td class="p-4 font-medium text-slate-200">${u.englishName} ${u.chineseName} ${statusIcon}</td>
                     <td class="p-4 text-slate-400">${u.section}</td>
+                    <td class="p-4 text-slate-400 font-mono text-sm">${formatTimeSeconds(u.timeSpent || 0)}${cheatWarning}</td>
                     <td class="p-4 text-right text-emerald-400 font-bold">${u.score} <span class="text-xs text-yellow-400 ml-1">(${percentage}%)</span></td>
                 `;
                 tbody.appendChild(tr);
