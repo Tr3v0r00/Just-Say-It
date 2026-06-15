@@ -398,7 +398,7 @@
                 { type: "respond", q: "How's the weather today?", keywords: ["sunny", "cloudy", "rainy", "windy", "hot", "cold", "warm", "cool", "fine", "snowy"] },
                 { type: "respond", q: "What's the season?", keywords: ["spring", "summer", "fall", "autumn", "winter"] },
                 { type: "respond", q: "How are you today?", keywords: ["fine", "good", "great", "ok", "okay", "well", "happy", "tired", "sad", "not bad"] },
-                { type: "read", q: "I usually wake up at seven o'clock.", keywords: ["usually", "wake", "seven", "o'clock"] },
+                { type: "read", q: "I usually wake up at seven o'clock.", keywords: ["usually", "wake", ["seven", "7", "7:00"], ["o'clock", "00", "7:00", "clock"]] },
                 { type: "read", q: "My favorite subject is English.", keywords: ["favorite", "subject", "english"] },
                 { type: "read", q: "We are going to the night market.", keywords: ["going", "night", "market"] },
                 { type: "read", q: "Can you help me with my homework?", keywords: ["help", "homework"] },
@@ -834,11 +834,20 @@
             let points = 0;
 
             if (q.type === 'respond') {
-                const isCorrect = q.keywords.some(kw => text.includes(kw));
+                const isCorrect = q.keywords.some(kw => {
+                    if (Array.isArray(kw)) return kw.some(k => text.includes(k));
+                    return text.includes(kw);
+                });
                 points = isCorrect ? 1 : 0;
             } else if (q.type === 'read') {
                 let matchCount = 0;
-                q.keywords.forEach(kw => { if (text.includes(kw)) matchCount++; });
+                q.keywords.forEach(kw => { 
+                    if (Array.isArray(kw)) {
+                        if (kw.some(k => text.includes(k))) matchCount++;
+                    } else {
+                        if (text.includes(kw)) matchCount++; 
+                    }
+                });
                 
                 const ratio = matchCount / q.keywords.length;
                 if (ratio >= 0.8) {
@@ -850,7 +859,16 @@
                 }
             }
 
-            const correctStr = q.type === 'respond' ? `(Any keyword: ${q.keywords.join(', ')})` : q.q;
+            // Clean up keywords array for the review screen text
+            let reviewKeywords = [];
+            if (q.type === 'respond') {
+                q.keywords.forEach(kw => {
+                    if (Array.isArray(kw)) reviewKeywords.push(kw[0]);
+                    else reviewKeywords.push(kw);
+                });
+            }
+            
+            const correctStr = q.type === 'respond' ? `(Any keyword: ${reviewKeywords.join(', ')})` : q.q;
 
             setTimeout(() => {
                 checkAnswer(points, q.maxPoints, transcript, correctStr);
